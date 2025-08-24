@@ -16,10 +16,15 @@
 
 <style>
   #app {
-    /* display: flex;
+    display: flex;
     flex-direction: column;
-    align-items: center; */
-    /* background-color: black; */
+    align-items: center;
+    font-family: 'Press Start 2P';
+  }
+
+  @font-face {
+    font-family: 'Press Start 2P';
+    src: url('@/assets/fonts/PressStart2P-Regular.ttf') format('truetype');
   }
 
   .content {

@@ -11,11 +11,11 @@
             <span class="rainbow-text">DRAW!</span>
         </v-btn>
 
-        <v-btn :to="{ name: 'home' }" color="#FF0000" :variant="route.name === 'home' ? 'text' : 'tonal'">
+        <v-btn :to="{ name: 'home' }" color="#FF0000" :variant="route.name === 'home' ? 'elevated' : 'tonal'">
         Home
         </v-btn>
 
-        <v-btn :to="{ name: 'gallery' }" color="#00FF00" :variant="route.name === 'gallery' ? 'text' : 'tonal'">
+        <v-btn :to="{ name: 'gallery' }" color="#00FF00" :variant="route.name === 'gallery' ? 'elevated' : 'tonal'">
         Gallery
         </v-btn>
 
@@ -64,18 +64,13 @@
         width: 100%;
         height: 3px;
         background: linear-gradient(to right, #FF0000, #00FF00, #0000FF);
-        border-radius: 2px;
     }
 
     .pixel-art-title {
-        font-family: 'Press Start 2P', 'VT323', monospace, 'Courier New', Courier;
-        font-size: 2rem;
-        font-weight: bold;
         color: #FFCCBC;
+        font-size: 1.5rem;
         margin-right: auto;
         letter-spacing: 2px;
-        text-shadow: 2px 2px 0 #333, 4px 4px 0 #222;
-        padding: 0.5rem 1rem;
         user-select: none;
     }
 
@@ -92,7 +87,7 @@
         -webkit-text-fill-color: transparent;
         background-clip: text;
         font-weight: bold;
-        font-size: 1.1rem;
+        font-size: 0.75rem;
         letter-spacing: 2px;
     }
 
@@ -112,8 +107,4 @@
         border-bottom: 2px solid #fff;
     }
 
-    .btnselected {
-        /* border-bottom: 2px solid #fff; */
-        background: none !important;
-    }
 </style>

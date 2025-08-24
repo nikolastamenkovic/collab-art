@@ -1,12 +1,20 @@
 <template>
-  <Header />
+  <div class="home">
+    <!-- <div></div> -->
+    <h1>
+      <span>Draw pixel art together </span>
+      <span>{{ "<3" }}</span>
+    </h1>
+  </div>
 </template>
 
 <script setup lang="ts">
   import { ref } from 'vue'
-  import Header from '@/components/Header.vue'
 
 </script>
 
 <style scoped>
+  .home {
+    padding: 1rem;
+  }
 </style>
