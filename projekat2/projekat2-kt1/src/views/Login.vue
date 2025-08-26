@@ -1,11 +1,11 @@
 <template>
-  <div>
-    <h1>Login</h1>
-    <p>This is the login page.</p>
-  </div>
+    <Dialog title = "Log in">
+      
+    </Dialog>
 </template>
 
 <script setup lang="ts">
+  
 </script>
 
 <style scoped>
