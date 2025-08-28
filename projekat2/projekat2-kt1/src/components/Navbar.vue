@@ -55,7 +55,7 @@
         align-items: center;
         position: relative;
     }
-
+    
     nav::after {
         content: "";
         position: absolute;

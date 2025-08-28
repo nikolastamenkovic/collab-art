@@ -12,7 +12,7 @@ export const registerSchema = loginSchema.extend({
   path: ["confirmPassword"]
 });
 
-export type LoginForm = z.infer<typeof loginSchema>;
-export type RegisterForm = z.infer<typeof registerSchema>;
+// export type LoginForm = z.infer<typeof loginSchema>;
+// export type RegisterForm = z.infer<typeof registerSchema>;
 
-export type AuthForm = LoginForm | RegisterForm;
+// export type AuthForm = LoginForm | RegisterForm;
