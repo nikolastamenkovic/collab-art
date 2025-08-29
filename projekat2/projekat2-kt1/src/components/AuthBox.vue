@@ -39,7 +39,7 @@ import { useRoute } from 'vue-router';
 import type { AuthForm } from '@/types/api';
 
 const route = useRoute();
-const valid = ref<boolean | null>(true);
+const valid = ref<boolean | null>(false);
 
 const props = defineProps<{
     title: string

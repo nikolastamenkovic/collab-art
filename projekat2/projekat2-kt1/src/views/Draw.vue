@@ -68,30 +68,24 @@
     </div>
 
     <v-dialog v-model="saveDialog" max-width="400px">
-      <v-card>
-        <v-card-title>Save Drawing</v-card-title>
-        <v-card-text>
-          <v-text-field
-            v-model="drawingName"
-            label="Drawing Name"
-            :rules="nameRules"
-            :error-messages="nameError"
-            required
-          />
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer />
-          <v-btn @click="saveDialog = false" variant="text">Cancel</v-btn>
-          <v-btn 
-            @click="saveDrawing" 
-            color="primary" 
-            :loading="saving"
-            :disabled="!drawingName.trim()"
-          >
-            Save
-          </v-btn>
-        </v-card-actions>
-      </v-card>
+      <v-form v-model="saveForm" @submit.prevent="saveDrawing">
+        <v-text-field
+          v-model="drawingName"
+          label="Drawing Name"
+          :rules="nameRules"
+          required
+        />
+        <v-spacer />
+        <v-btn @click="saveDialog = false" variant="text">Cancel</v-btn>
+        <v-btn 
+          type="submit"
+          color="primary" 
+          :loading="saving"
+          :disabled="!formValid"
+        >
+          Save
+        </v-btn>
+      </v-form>
     </v-dialog>
     <v-alert 
       v-if="successMessage" 
@@ -114,9 +108,13 @@
 </template>
 
 <script setup lang="ts">
-  import { ref, watch } from 'vue';
+  import { ref, watch, reactive } from 'vue';
   import { useAuthStore } from '@/stores/AuthStore';
+  import { BasePictureDto } from '@/types/picture';
+  import { useRouter } from 'vue-router';
 
+  const route = useRoute();
+  const router = useRouter();
   const authStore = useAuthStore();
   const n = ref(16);
   const tempN = ref(16);
@@ -130,7 +128,7 @@
   const saving = ref(false);
   const successMessage = ref<string | null>(null);
   const errorMessage = ref<string | null>(null);
-  const nameError = ref<string | null>(null);
+  const saveForm = ref<boolean>(false);
 
   const nameRules = [
     (v: string) => !!v.trim() || 'Drawing name is required',
@@ -175,25 +173,49 @@
   }
 
   function resizeGrid(oldSize: number){
-    if (oldSize > n.value) {
-      tiles.value.splice(n.value-1);
-      tiles.value.forEach(row => row.splice(n.value-1));
+    const newGrid = Array.from({ length: n.value }, () => Array(n.value).fill('#fff'));
+    const newSize = Math.min(n.value, oldSize);
+
+    for (let row = 0; row < newSize; row++) {
+      for (let col = 0; col < newSize; col++) {
+        newGrid[row][col] = oldGrid[row][col];
+      }
     }
-    else if (oldSize < n.value)
-      tiles.value.push(Array(n.value).fill('#fff'));
+
+  return newGrid;
   }
 
-  function draw(idx: number) {
-    tiles.value[idx] = tool.value === 'pen' ? color.value : '#fff';
+  function draw(row: number, col: number) {
+    tiles.value[row][col] = tool.value === 'pen' ? color.value : '#fff';
   }
 
   function openSaveDialog() {
     if (!authStore.isAuthenticated) { 
+      localStorage.setItem('pendingDrawing',JSON.stringify(tiles.value));
+
+      router.push({
+        name: 'login', 
+        query: { returnTo: 'draw', save: 'true' } 
+      });
+
+      return;
     }
     
     drawingName.value = '';
-    nameError.value = null;
     saveDialog.value = true;
+  }
+
+  async function saveDrawing(){
+    saving.value = true;
+
+    const picture: BasePictureDto = {
+      name: drawingName
+    }
+
+    const pendingDrawing = localStorage.getItem('pendingDrawing');
+
+    if (pendingDrawing)
+
   }
 
   window.addEventListener('mousedown', () => (mouseDown.value = true));
