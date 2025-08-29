@@ -18,28 +18,47 @@
         <v-btn :to="{ name: 'gallery' }" color="#00FF00" :variant="route.name === 'gallery' ? 'elevated' : 'tonal'">
         Gallery
         </v-btn>
-
-        <RouterLink
-            :to="{ name: 'login' }"
-            class="nav-link"
-            :class="{ selected: route.name === 'login' }"
+        <div v-if="!isAuthenticated">
+            <RouterLink
+                :to="{ name: 'login' }"
+                class="nav-link"
+                :class="{ selected: route.name === 'login' }"
+                >
+                Log in
+            </RouterLink>
+            <RouterLink
+                :to="{ name: 'register' }"
+                class="nav-link"
+                :class="{ selected: route.name === 'register' }"
+                >
+                Register
+            </RouterLink>
+        </div>
+        <div v-else>
+            <button
+                @click="handleLogout"
+                class="nav-link logout-btn"
             >
-            Log in
-        </RouterLink>
-        <RouterLink
-            :to="{ name: 'register' }"
-            class="nav-link"
-            :class="{ selected: route.name === 'register' }"
-            >
-            Register
-        </RouterLink>
-
+                Logout
+            </button>
+        </div>
     </nav>
 </template>
 
 <script setup lang="ts">
-  import { RouterLink, useRoute } from 'vue-router'
-  const route = useRoute()
+    import { RouterLink, useRoute, useRouter } from 'vue-router'
+    import { useAuthStore } from '@/stores/AuthStore'
+    import { computed } from 'vue'
+
+    const route = useRoute()
+    const router = useRouter()
+    const authStore = useAuthStore()
+    const isAuthenticated = computed(() => authStore.isAuthenticated)
+
+    function handleLogout() {
+        authStore.logout()
+        router.push({ name: 'home' })
+    }
 </script>
 
 <style scoped>

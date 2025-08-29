@@ -1,7 +1,7 @@
 <template>
     <div class="authbox">
         <h1>{{ title }}</h1>
-        <v-form ref="form" @submit.prevent="handleSubmit">
+        <v-form v-model="valid" @submit.prevent="handleSubmit">
             <v-text-field 
                 v-model="formData.username"
                 label="Username" 
@@ -24,6 +24,7 @@
                 type="submit" 
                 color="primary" 
                 :loading="isLoading"
+                :disabled="!valid"
                 block
             >
                 {{ isRegister ? 'Register' : 'Log in' }}
@@ -33,18 +34,20 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed } from 'vue';
+import { ref, reactive, computed, toRaw } from 'vue';
 import { useRoute } from 'vue-router';
-import type { AuthForm } from '@/types/auth';
+import type { AuthForm } from '@/types/api';
 
 const route = useRoute();
-const form = ref();
+const valid = ref<boolean | null>(true);
 
 const props = defineProps<{
     title: string
 }>();
 
-const emit = defineEmits();
+const emit = defineEmits<{
+    submit: [formData: AuthForm]
+}>();
 
 const isRegister = computed(() => route.name === 'register');
 const isLoading = ref(false);
@@ -74,21 +77,17 @@ const confirmPasswordRules = computed(() => [
 ]);
 
 async function handleSubmit() {
-    const { valid } = await form.value.validate();
+    // const { valid } = await form.value.validate();
     
-    if (!valid) {
-        return;
-    }
+    // if (!valid) {
+    //     return;
+    // }
 
     isLoading.value = true;
     
-    try {
-        emit('submit', formData);
-    } catch (error) {
-        console.error('Form submission error:', error);
-    } finally {
-        isLoading.value = false;
-    }
+    emit('submit', toRaw(formData));
+
+    isLoading.value = false;
 }
 </script>
 
