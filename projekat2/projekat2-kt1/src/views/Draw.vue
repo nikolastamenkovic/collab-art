@@ -110,7 +110,7 @@
 </template>
 
 <script setup lang="ts">
-  import { ref, watch, reactive, onMounted } from 'vue';
+  import { ref, watch, reactive, onMounted, onUnmounted } from 'vue';
   import { useAuthStore } from '@/stores/AuthStore';
   import type { BasePictureDto } from '@/types/picture';
   import { useRoute, useRouter } from 'vue-router';
@@ -142,6 +142,8 @@
   ];
 
   onMounted(async () => {
+    window.addEventListener('mousedown', handleMouseDown);
+    window.addEventListener('mouseup', handleMouseUp);
     if (route.query.save === 'true' && authStore.isAuthenticated) {
       const pendingDrawing = localStorage.getItem('pendingDrawing');
       if (pendingDrawing) {
@@ -288,9 +290,19 @@
     saving.value = false;
     pictureName.value = picture.name;
   }
+  
+  function handleMouseDown() {
+    mouseDown.value = true;
+  } 
 
-  window.addEventListener('mousedown', () => (mouseDown.value = true));
-  window.addEventListener('mouseup', () => (mouseDown.value = false));
+  function handleMouseUp() {
+    mouseDown.value = false;
+  }
+
+  onUnmounted(() => {
+    window.removeEventListener('mousedown', handleMouseDown);
+    window.removeEventListener('mouseup', handleMouseUp);
+  });
 </script>
 
 <style scoped>
