@@ -9,7 +9,7 @@
 <template>
   <Navbar />
 
-  <div class="content">
+  <div>
     <RouterView />
   </div>
 </template>
@@ -50,9 +50,5 @@
   @font-face {
     font-family: 'Press Start 2P';
     src: url('@/assets/fonts/PressStart2P-Regular.ttf') format('truetype');
-  }
-
-  .content {
-    padding: 1rem;
   }
 </style>

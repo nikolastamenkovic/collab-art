@@ -1,4 +1,5 @@
 import type { ZodIssue } from "zod";
+import type { PictureDto } from "./picture";
 
 export type APIErrorCommon = {
     failed: true;
@@ -6,22 +7,52 @@ export type APIErrorCommon = {
     extra?: ZodIssue[];
 };
 
-export interface AuthForm {
+export type AuthForm = {
     username: string;
     password: string;
     confirmPassword?: string;
 }
 
-export interface LoginResponse {
+export type LoginResponse = {
   failed: false;
   token: string;
   user_id: string;
   username: string;
 }
 
-export interface RegisterResponse {
+export type RegisterResponse = {
     failed: false;
     user_id: string;
+}
+
+export type NewPictureRes = {
+failed: false;
+picture_id: string;
+}
+
+export type PictureQueryParams = {
+  limit?: number;
+  page?: number;
+  user_id?: string;
+  older_first?: boolean;
+}
+
+export type UpdatePictureRes = {
+failed: false;
+}
+
+export type DeletePictureRes = {
+failed: false;
+}
+
+export interface PictureListingPage {
+pictures: PictureDto[];
+total: number;
+}
+
+export type GetPictureRes = {
+failed: false;
+picture: PictureDto;
 }
 
 type ErrorCode =

@@ -1,5 +1,6 @@
 <template>
   <div class="draw-container">
+    <h1>{{ pictureName }}</h1>
     <div class="toolbox">
       <v-btn
         @click="tool = 'pen'"
@@ -22,21 +23,15 @@
         v-model="color"
         :disabled="tool === 'eraser'"
       />
-      <v-number-input
-        v-model="tempN"
-        :min="2"
-        :max="24"
-        control-variant="split"
-        @click:increment="handleInc"
-        @click:decrement="handleDec"
-        @keydown.enter="onEnterN"
-        @blur="resetTempN"
-      />
+      <v-btn @click="handleDec" :disabled="n <= 1">-</v-btn>
+      <input id="grid-size-input" :value="n" type="text" @keydown.enter="onEnterN" @blur="resetTempN" style="max-width: 50px;" />
+      <v-btn @click="handleInc" :disabled="n >= 24">+</v-btn>
       <v-divider vertical />
       <v-btn
-        @click="openSaveDialog"
+        @click="handleSave"
         color="success"
         variant="elevated"
+        :disabled="authStore.userId !== pictureUserId"
       >
         <v-icon>mdi-content-save</v-icon>
         Save
@@ -68,24 +63,31 @@
     </div>
 
     <v-dialog v-model="saveDialog" max-width="400px">
-      <v-form v-model="saveForm" @submit.prevent="saveDrawing">
-        <v-text-field
-          v-model="drawingName"
-          label="Drawing Name"
-          :rules="nameRules"
-          required
-        />
-        <v-spacer />
-        <v-btn @click="saveDialog = false" variant="text">Cancel</v-btn>
-        <v-btn 
-          type="submit"
-          color="primary" 
-          :loading="saving"
-          :disabled="!formValid"
-        >
-          Save
-        </v-btn>
-      </v-form>
+      <v-card>
+        <v-card-title>Save Drawing</v-card-title>
+        <v-card-text>
+          <v-form v-model="saveForm" @submit.prevent="saveDrawing">
+            <v-text-field
+              v-model="drawingName"
+              label="Drawing Name"
+              :rules="nameRules"
+              required
+            />
+          </v-form>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn @click="saveDialog = false" variant="text">Cancel</v-btn>
+          <v-btn 
+            @click="saveDrawing"
+            color="primary" 
+            :loading="saving"
+            :disabled="!saveForm"
+          >
+            Save
+          </v-btn>
+        </v-card-actions>
+      </v-card>
     </v-dialog>
     <v-alert 
       v-if="successMessage" 
@@ -108,20 +110,20 @@
 </template>
 
 <script setup lang="ts">
-  import { ref, watch, reactive } from 'vue';
+  import { ref, watch, reactive, onMounted } from 'vue';
   import { useAuthStore } from '@/stores/AuthStore';
-  import { BasePictureDto } from '@/types/picture';
-  import { useRouter } from 'vue-router';
+  import type { BasePictureDto } from '@/types/picture';
+  import { useRoute, useRouter } from 'vue-router';
+  import { usePictureStore } from '@/stores/PictureStore';
 
   const route = useRoute();
   const router = useRouter();
   const authStore = useAuthStore();
   const n = ref(16);
-  const tempN = ref(16);
   const tool = ref<'pen' | 'eraser'>('pen');
   const color = ref('#000');
   const mouseDown = ref(false);
-  const tiles = reactive<string[][]>(Array.from({ length: n.value }, () => Array(n.value).fill('#fff')));
+  const tiles = ref<string[][]>(Array.from({ length: n.value }, () => Array(n.value).fill('#fff')));
 
   const saveDialog = ref(false);
   const drawingName = ref('');
@@ -129,60 +131,112 @@
   const successMessage = ref<string | null>(null);
   const errorMessage = ref<string | null>(null);
   const saveForm = ref<boolean>(false);
+  const pictureName = ref<string>('Untitled');
+  const pictureUserId = ref<string | null>(authStore.userId);
+  const pictureId = ref<string | null>(route.query.id as string | null);
+  const pictureStore = usePictureStore();
 
   const nameRules = [
     (v: string) => !!v.trim() || 'Drawing name is required',
-    (v: string) => v.trim().length <= 50 || 'Drawing name must be 50 characters or less'
+    (v: string) => v.trim().length <= 40 || 'Drawing name must be 40 characters or less'
   ];
 
-  onMounted(() => {
+  onMounted(async () => {
     if (route.query.save === 'true' && authStore.isAuthenticated) {
+      const pendingDrawing = localStorage.getItem('pendingDrawing');
+      if (pendingDrawing) {
+        try {
+          const savedTiles = JSON.parse(pendingDrawing);
+          tiles.value = savedTiles;
+          localStorage.removeItem('pendingDrawing');
+        } catch (error) {
+          console.error('Failed to restore pending drawing:', error);
+        }
+      }
       openSaveDialog();
-      router.replace({ name: 'draw' });
+      router.replace({ name: 'draw' , query: { id: pictureId.value } });
+    }
+    else if (route.query.id) {
+      pictureId.value = route.query.id as string;
+      const result = await pictureStore.getPictureById(pictureId.value);
+      if (result.success && result.data) {
+        n.value = result.data.picture_data.length;
+        tiles.value = result.data.picture_data;
+        pictureName.value = result.data.name;
+        pictureUserId.value = result.data.author.user_id;      }
     }
   });
 
-  function handleInc(){
-    tempN++;
-    n++;
+  function handleDec() {
+    n.value--;
   }
 
-  function handleDec(){
-    tempN--;
-    n--;
+  function handleInc() {
+    n.value++;
+  }
+
+  async function handleSave(){
+    if (route.query.id) {
+      const pictureId = route.query.id as string;
+
+      const result = await pictureStore.updatePicture(pictureId, {
+        name: pictureName.value,
+        picture_data: tiles.value
+      });
+
+      if (result.success) {
+        successMessage.value = 'Drawing updated successfully!';
+      } else {
+        errorMessage.value = result.error || 'Failed to update drawing';
+      }
+    }
+    else
+      openSaveDialog();
   }
 
   watch(n, (newN,oldN) => {
-    if (newN !== oldN) 
+    if (newN !== oldN) {
       tiles.value = resizeGrid(oldN)
+      console.log(tiles.value.length + " " + tiles.value[0].length)
+    }
   });
-
-  function onEnterN() {
-    let newSize = tempN.value;
-
-    if (newSize < 1) newSize = 1;
-    if (newSize > 24) newSize = 24;
-
-    if (newSize !== n.value)
-      n.value = newSize;
-    tempN.value = newSize;
+  
+  function resetTempN() {
+    const el = document.getElementById('grid-size-input') as HTMLInputElement;
+    if(el)
+      el.value = n.value.toString();
   }
 
-  function resetTempN() {
-    tempN.value = n.value;
+  function onEnterN() {
+    const el = document.getElementById('grid-size-input') as HTMLInputElement;
+    let newSize = n.value;
+    try{ 
+      newSize = parseInt(el.value);
+      if (isNaN(newSize)) newSize = 16;
+
+      if (newSize < 1) newSize = 1;
+      if (newSize > 24) newSize = 24;
+
+      if (newSize !== n.value)
+        n.value = newSize;
+    } catch(e) {}
+    finally {
+      el.value = n.value.toString();
+    }
   }
 
   function resizeGrid(oldSize: number){
     const newGrid = Array.from({ length: n.value }, () => Array(n.value).fill('#fff'));
     const newSize = Math.min(n.value, oldSize);
-
     for (let row = 0; row < newSize; row++) {
       for (let col = 0; col < newSize; col++) {
-        newGrid[row][col] = oldGrid[row][col];
+        newGrid[row][col] = tiles.value[row][col];
       }
     }
 
-  return newGrid;
+    console.log("New grid size:" + newGrid.length + " " + newGrid[0].length);
+
+    return newGrid;
   }
 
   function draw(row: number, col: number) {
@@ -190,8 +244,8 @@
   }
 
   function openSaveDialog() {
-    if (!authStore.isAuthenticated) { 
-      localStorage.setItem('pendingDrawing',JSON.stringify(tiles.value));
+    if (!authStore.isAuthenticated) {
+      localStorage.setItem('pendingDrawing', JSON.stringify(tiles));
 
       router.push({
         name: 'login', 
@@ -205,17 +259,34 @@
     saveDialog.value = true;
   }
 
-  async function saveDrawing(){
+  async function saveDrawing() {
     saving.value = true;
+    errorMessage.value = null;
+    successMessage.value = null;
 
     const picture: BasePictureDto = {
-      name: drawingName
+      name: drawingName.value.trim(),
+      picture_data: tiles.value
+    };
+
+    const result = await pictureStore.createPicture(picture);
+    if (result.success) {
+      pictureId.value = result.pictureId || null;
+      router.replace({ name: 'draw' , query: { id: pictureId.value } });
+
+      successMessage.value = 'Drawing saved successfully!';
+      saveDialog.value = false;
+              
+      setTimeout(() => {
+        successMessage.value = null;
+      }, 3000);
+
+    } else {
+      errorMessage.value = result.error || 'Failed to save drawing';
     }
 
-    const pendingDrawing = localStorage.getItem('pendingDrawing');
-
-    if (pendingDrawing)
-
+    saving.value = false;
+    pictureName.value = picture.name;
   }
 
   window.addEventListener('mousedown', () => (mouseDown.value = true));
@@ -228,6 +299,7 @@
     flex-direction: column;
     justify-content: center;
     align-items: center;
+    padding: 2rem;
     gap: 1em;
   }
 
@@ -261,9 +333,14 @@
     cursor: pointer;
     padding: 0;
   }
-
-  .toolbox > * {
+  
+  .toolbox > .v-btn {
     display: flex;
     align-items: center;
+  }
+
+  .grid-size-input :deep(.v-field__input) {
+    text-align: center;
+    min-width: 50px;
   }
 </style>

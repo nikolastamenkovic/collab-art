@@ -4,7 +4,6 @@
         <v-btn
             :to="{ name: 'draw' }"
             variant="text"
-            class="rainbow-btn"
             size="x-large"
         >
             <v-icon class="rainbow-text" icon="mdi-pencil" />
@@ -15,7 +14,7 @@
         Home
         </v-btn>
 
-        <v-btn :to="{ name: 'gallery' }" color="#00FF00" :variant="route.name === 'gallery' ? 'elevated' : 'tonal'">
+        <v-btn :to="{ name: 'gallery' }" color="#00FF00" :variant="route.name === 'gallery' && route.query.author !== authStore.userId ? 'elevated' : 'tonal'">
         Gallery
         </v-btn>
         <div v-if="!isAuthenticated">
@@ -35,12 +34,22 @@
             </RouterLink>
         </div>
         <div v-else>
+            <RouterLink
+                :to="{ name: 'gallery', query: { author: authStore.userId } }"
+                class="nav-link"
+            >
+                My Gallery
+            </RouterLink>
             <button
                 @click="handleLogout"
-                class="nav-link logout-btn"
+                class="nav-link"
             >
                 Logout
             </button>
+            <span class="username-display">
+                <v-icon>mdi-account-box</v-icon>
+                {{ authStore.username }}
+            </span>
         </div>
     </nav>
 </template>
@@ -66,7 +75,6 @@
         background-color: black;
         padding: 1rem;
         text-align: center;
-        border-bottom: none;
         width: 100%;
         display: flex;
         justify-content: right;
@@ -85,19 +93,19 @@
         background: linear-gradient(to right, #FF0000, #00FF00, #0000FF);
     }
 
+    .username-display {
+        color: #FFCCBC;;
+        font-size: 0.75rem;
+        padding: 0.5rem;
+        user-select: none;
+    }
+
     .pixel-art-title {
         color: #FFCCBC;
         font-size: 1.5rem;
         margin-right: auto;
         letter-spacing: 2px;
         user-select: none;
-    }
-
-    .rainbow-btn {
-        background: none;
-        box-shadow: none;
-        padding: 0.5rem 1rem;
-        min-width: unset;
     }
 
     .rainbow-text {
@@ -112,12 +120,12 @@
 
     .nav-link {
         color: #fff;
-        text-decoration: none;
         font-weight: bold;
-        font-size: 1rem;
-        padding: 0.5rem 1rem;
-        transition: border-bottom 0.2s;
+        font-size: 0.75rem;
+        text-decoration: none;
+        transition: border-bottom 0.15s;
         border-bottom: 2px solid transparent;
+        padding: 0.5rem;
         cursor: pointer;
     }
 

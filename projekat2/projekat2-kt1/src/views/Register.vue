@@ -1,15 +1,17 @@
 <template>
-  <AuthBox title = "Register" @submit="handleRegister"/>
-    <v-alert 
-        v-if="errorMessage" 
-        type="error" 
-        closable
-        @click:close="errorMessage = null"
-        >{{ errorMessage }}</v-alert>
-    <v-alert
-        v-if="successMessage"
-        type="success"
-    >{{ successMessage }}</v-alert>
+    <div class="register">
+        <AuthBox title = "Register" @submit="handleRegister"/>
+        <v-alert 
+            v-if="errorMessage" 
+            type="error" 
+            closable
+            @click:close="errorMessage = null"
+            >{{ errorMessage }}</v-alert>
+        <v-alert
+            v-if="successMessage"
+            type="success"
+        >{{ successMessage }}</v-alert>
+    </div>
 </template>
 
 <script setup lang="ts">
@@ -40,9 +42,12 @@ async function handleRegister(credentials: AuthForm) {
     setTimeout(() => {
       successMessage.value = null;
       router.push({ name: 'login' });
-    }, 2000);
+    }, 1000);
 }
 </script>
 
 <style scoped>
+.register {
+    padding: 1rem;
+}
 </style>
