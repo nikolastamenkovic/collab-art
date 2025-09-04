@@ -12,7 +12,7 @@
 
 <script setup lang="ts">
     import AuthBox from "@/components/AuthBox.vue";
-    import type { AuthForm } from "@/types/api";
+    import type { AuthReq } from "@/types/api";
     import { useRouter, useRoute } from "vue-router";
     import { useAuthStore } from "@/stores/AuthStore";
     import { ref } from "vue";
@@ -22,7 +22,7 @@
     const authStore = useAuthStore();
     const errorMessage = ref<string | null>(null);
 
-    async function handleLogin(formData: AuthForm) {
+    async function handleLogin(formData: AuthReq) {
         const result = await authStore.login(formData);
         if (result.success) {
             const returnTo = route.query.returnTo as string;

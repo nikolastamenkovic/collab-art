@@ -17,7 +17,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useAuthStore } from '@/stores/AuthStore';
-import type { AuthForm } from '@/types/api';
+import type { AuthReq } from '@/types/api';
 import { useRouter } from 'vue-router';
 import AuthBox from '@/components/AuthBox.vue';
 
@@ -26,12 +26,7 @@ const authStore = useAuthStore();
 const errorMessage = ref<string | null>(null);
 const successMessage = ref<string | null>(null);
 
-async function handleRegister(credentials: AuthForm) {
-    if (typeof authStore.register !== 'function') {
-        console.error('authStore.register is not a function!', typeof authStore.register);
-        return;
-    }
-  
+async function handleRegister(credentials: AuthReq) {
     const { success, error } = await authStore.register(credentials);
     if (!success && error) {
         errorMessage.value = error;

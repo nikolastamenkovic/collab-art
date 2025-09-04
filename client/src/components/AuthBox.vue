@@ -36,7 +36,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed, toRaw } from 'vue';
 import { useRoute } from 'vue-router';
-import type { AuthForm } from '@/types/api';
+import type { AuthForm, AuthReq } from '@/types/api';
 
 const route = useRoute();
 const valid = ref<boolean | null>(false);
@@ -46,7 +46,7 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-    submit: [formData: AuthForm]
+    submit: [formData: AuthReq]
 }>();
 
 const isRegister = computed(() => route.name === 'register');
@@ -84,8 +84,8 @@ async function handleSubmit() {
     // }
 
     isLoading.value = true;
-    
-    emit('submit', toRaw(formData));
+
+    emit('submit', { username: formData.username.trim(), password: formData.password });
 
     isLoading.value = false;
 }

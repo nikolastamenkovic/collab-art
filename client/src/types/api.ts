@@ -1,4 +1,4 @@
-import type { ZodIssue } from "zod";
+import type { ZodIssue } from "zod/v3";
 import type { PictureDto } from "./picture";
 
 export type APIErrorCommon = {
@@ -11,6 +11,11 @@ export type AuthForm = {
     username: string;
     password: string;
     confirmPassword?: string;
+}
+
+export type AuthReq = {
+    username: string;
+    password: string;
 }
 
 export type LoginResponse = {
@@ -76,8 +81,13 @@ export function getErrorMessage(error: APIErrorCommon): string {
             return "You are already logged in.";
         case "INCORRECT_CREDENTIALS":
             return "Incorrect username or password.";
-        case "INVALID_DATA":
+        case "INVALID_DATA": {
+            const issues = error.extra || [];
+            if (issues.length) {
+                return `The provided data is invalid: ${issues.map(issue => issue.message).join(", ")}`;
+            }
             return "The provided data is invalid.";
+        }
         case "NO_SUCH_ENTITY":
             return "The requested entity does not exist.";
         case "NOT_YOURS":
