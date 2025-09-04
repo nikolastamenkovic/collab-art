@@ -12,6 +12,7 @@
       <div
         v-for="(row, rowIdx) in pic.picture_data"
         :key="`row-${rowIdx}`"
+        style="display: contents;"
       >
         <div
           v-for="(tile, colIdx) in row"

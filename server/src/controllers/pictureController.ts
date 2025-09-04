@@ -1,0 +1,161 @@
+import { Request, Response } from "express";
+import { AppDataSource } from "../data-source";
+import { Picture } from "../entities/Picture";
+import { User } from "../entities/User";
+import { DeletePictureRes, GetPictureRes, NewPictureRes, PictureDto, PictureListingPage, UpdatePictureRes } from "../types/picture";
+
+const pictureRepository = AppDataSource.getRepository(Picture);
+const userRepository = AppDataSource.getRepository(User);
+
+export const getPictures = async (req: Request, res: Response) => {
+  try {
+    const limit = Math.min(Math.max(parseInt(req.query.limit as string) || 10, 1), 25);
+    const page = Math.max(parseInt(req.query.page as string) || 1, 1);
+    const author = req.query.author as string;
+    const olderFirst = req.query.older_first === 'true';
+
+    const offset = (page - 1) * limit;
+
+    const findOptions: any = {
+      take: limit,
+      skip: offset,
+      order: {
+        created_at: olderFirst ? 'ASC' : 'DESC'
+      }
+    };
+
+    if (author) {
+      findOptions.where = {
+        author: { id: author }
+      };
+    }
+
+    const [pictures, total] = await pictureRepository.findAndCount(findOptions);
+
+    const picturesDtos: PictureDto[] = pictures.map(picture => ({
+      picture_id: picture.id,
+      name: picture.name,
+      picture_data: picture.picture_data,
+      author: {
+        user_id: picture.author.id,
+        username: picture.author.username
+      },
+      created_at: picture.created_at.toISOString(),
+      updated_at: picture.updated_at.toISOString()
+    }));
+
+    const response: PictureListingPage = {
+      pictures: picturesDtos,
+      total: total
+    };
+    res.status(200).json(response);
+  } catch (error) {
+    res.status(500).json({ failed: true, code: "INTERNAL_ERROR" });
+  }
+};
+
+export const getPictureById = async (req: Request, res: Response) => {
+  try {
+    const pictureId = req.params.id;
+    const picture = await pictureRepository.findOneBy({ id: pictureId });
+
+    if (!picture) {
+      return res.status(404).json({ failed: true, code: "NO_SUCH_ENTITY" });
+    }
+
+    const result: PictureDto = {
+      picture_id: picture.id,
+      name: picture.name,
+      author: {
+        user_id: picture.author.id,
+        username: picture.author.username
+      },
+      picture_data: picture.picture_data,
+      created_at: picture.created_at.toISOString(),
+      updated_at: picture.updated_at.toISOString()
+    };
+
+    const getPictureRes: GetPictureRes = {
+      failed: false,
+      picture: result
+    };
+
+    res.status(200).json(getPictureRes);
+  } catch (error) {
+    res.status(500).json({ failed: true, code: "INTERNAL_ERROR" });
+  }
+};
+
+export const createPicture = async (req: Request, res: Response) => {
+  try {
+    const user = await userRepository.findOneBy({ id: req.user?.id });
+    if (!user) {
+      return res.status(404).json({ failed: true, code: "NO_SUCH_ENTITY" });
+    }
+
+    const newPicture = pictureRepository.create({
+      picture_data: req.body.picture_data,
+      name: req.body.name,
+      author: user
+    });
+    const savedPicture = await pictureRepository.save(newPicture);
+
+    const newPictureRes: NewPictureRes = {
+      failed: false,
+      picture_id: savedPicture.id
+    }
+    res.status(201).json(newPictureRes);
+  } catch (error) {
+    res.status(500).json({ failed: true, code: "INTERNAL_ERROR" });
+  }
+};
+
+export const deletePicture = async (req: Request, res: Response) => {
+  try {
+    const pictureId = req.params.id;
+    const picture = await pictureRepository.findOneBy({ id: pictureId });
+
+    if (!picture) {
+      return res.status(404).json({ failed: true, code: "NO_SUCH_ENTITY" });
+    }
+
+    if (picture.author.id !== req.user.id) {
+      return res.status(403).json({ failed: true, code: "NOT_YOURS" });
+    }
+
+    await pictureRepository.remove(picture);
+
+    const deletePictureRes: DeletePictureRes = {
+      failed: false
+    };
+
+    res.status(200).json(deletePictureRes);
+  } catch (error) {
+    res.status(500).json({ failed: true, code: "INTERNAL_ERROR" });
+  }
+};
+
+export const updatePicture = async (req: Request, res: Response) => {
+  try {
+    const pictureId = req.params.id;
+    const picture = await pictureRepository.findOneBy({ id: pictureId });
+
+    if (!picture) {
+      return res.status(404).json({ failed: true, code: "NO_SUCH_ENTITY" });
+    }
+
+    if (picture.author.id !== req.user.id) {
+      return res.status(403).json({ failed: true, code: "NOT_YOURS" });
+    }
+
+    const updatedPicture = pictureRepository.merge(picture, req.body);
+    await pictureRepository.save(updatedPicture);
+
+    const updatePictureRes: UpdatePictureRes = {
+      failed: false,
+    }
+    res.status(200).json(updatePictureRes);
+  } catch (error) {
+    res.status(500).json({ failed: true, code: "INTERNAL_ERROR" });
+  }
+};

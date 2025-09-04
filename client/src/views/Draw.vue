@@ -46,7 +46,7 @@
     >
       <div
         v-for="(row, rowIdx) in tiles"
-        :key="`row-${rowIdx}`">
+        :key="`row-${rowIdx}`" class="row-wrapper">
         <div
           v-for="(tile, colIdx) in row"
           :key="`tile-${rowIdx}-${colIdx}`"
@@ -110,7 +110,7 @@
 </template>
 
 <script setup lang="ts">
-  import { ref, watch, reactive, onMounted, onUnmounted } from 'vue';
+  import { ref, watch, reactive, onMounted, onUnmounted, toRaw } from 'vue';
   import { useAuthStore } from '@/stores/AuthStore';
   import type { BasePictureDto } from '@/types/picture';
   import { useRoute, useRouter } from 'vue-router';
@@ -163,9 +163,11 @@
       const result = await pictureStore.getPictureById(pictureId.value);
       if (result.success && result.data) {
         n.value = result.data.picture_data.length;
-        tiles.value = result.data.picture_data;
+        tiles.value = toRaw(result.data.picture_data);
         pictureName.value = result.data.name;
-        pictureUserId.value = result.data.author.user_id;      }
+        pictureUserId.value = result.data.author.user_id;      
+        console.log(tiles.value);
+      }
     }
   });
 
@@ -247,7 +249,9 @@
 
   function openSaveDialog() {
     if (!authStore.isAuthenticated) {
-      localStorage.setItem('pendingDrawing', JSON.stringify(tiles));
+      const tilesTmp = JSON.stringify(tiles.value);
+
+      localStorage.setItem('pendingDrawing', tilesTmp);
 
       router.push({
         name: 'login', 
@@ -344,6 +348,10 @@
     border-radius: 6px;
     cursor: pointer;
     padding: 0;
+  }
+
+  .row-wrapper {
+    display: contents;
   }
   
   .toolbox > .v-btn {

@@ -1,7 +1,7 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
 import type { LoginResponse, APIErrorCommon, AuthForm, RegisterResponse } from "@/types/api";
-import { getErrorMessage } from "@/types/api";
+import { API_ENDPOINTS, getErrorMessage } from "@/types/api";
 
 
 export const useAuthStore = defineStore("auth", () => {
@@ -12,7 +12,7 @@ export const useAuthStore = defineStore("auth", () => {
 
     async function login(credentials: AuthForm): Promise<{ success: boolean; error?: string }> {
         try {
-            const response = await fetch("https://raf-pixeldraw.aarsen.me/api/auth/login", {
+            const response = await fetch(API_ENDPOINTS.AUTH_LOGIN, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -45,7 +45,7 @@ export const useAuthStore = defineStore("auth", () => {
 
     async function register(credentials: AuthForm): Promise<{ success: boolean; error?: string }> {
         try {
-            const response = await fetch("https://raf-pixeldraw.aarsen.me/api/auth/register", {
+            const response = await fetch(API_ENDPOINTS.AUTH_REGISTER, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

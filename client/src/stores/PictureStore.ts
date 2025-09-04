@@ -4,7 +4,7 @@ import { ref,reactive } from 'vue';
 import { useAuthStore } from './AuthStore';
 import type { APIErrorCommon, PictureListingPage, GetPictureRes, UpdatePictureRes } from '@/types/api';
 import type { PictureQueryParams, NewPictureRes, DeletePictureRes } from '@/types/api';
-import { getErrorMessage } from '@/types/api';
+import { API_ENDPOINTS, getErrorMessage } from '@/types/api';
 
 export const usePictureStore = defineStore('pictures', () => {
     const pictures = reactive<PictureDto[]>([]);
@@ -23,25 +23,26 @@ export const usePictureStore = defineStore('pictures', () => {
         return headers;
     }
 
-    async function handleApiCall<T>(apiCall: () => Promise<Response>): Promise<{ success: true; data: T } | { success: false; error: string }> {
+    async function handleApiCall<T>(apiCall: () => Promise<Response>): Promise<{ success: true; data: T } | { success: false; error: APIErrorCommon }> {
         try {
             const response = await apiCall();
             const data = await response.json();
 
             if (response.ok && !data.failed) {
+                // console.log('Ovo je data u handleApi:' + data);
                 return { success: true, data };
             } else {
                 const errorData = data as APIErrorCommon;
-                return { success: false, error: getErrorMessage(errorData) };
+                return { success: false, error: errorData };
             }
         } catch (err) {
-            return { success: false, error: 'Network error occurred' };
+            return { success: false, error: { failed: true, code: 'INTERNAL_ERROR' } };
         }
     }
 
     async function createPicture(picture: BasePictureDto): Promise<{ success: boolean; error?: string; pictureId?: string }> {
         const result = await handleApiCall<NewPictureRes>(() =>
-        fetch('https://raf-pixeldraw.aarsen.me/api/pictures', {
+            fetch(API_ENDPOINTS.PICTURES, {
                 method: 'POST',
                 headers: getAuthHeaders(),
                 body: JSON.stringify(picture)
@@ -51,7 +52,10 @@ export const usePictureStore = defineStore('pictures', () => {
         if (result.success) {
             return { success: true, pictureId: result.data.picture_id };
         } else {
-            return { success: false, error: result.error };
+            if (result.error.code == 'NOT_AUTHENTICATED' && authStore.isAuthenticated) {
+                authStore.logout();
+            }
+            return { success: false, error: getErrorMessage(result.error) };
         }
     }
 
@@ -63,7 +67,10 @@ export const usePictureStore = defineStore('pictures', () => {
         if (params?.user_id) queryParams.append('author', params.user_id);
         if (params?.older_first) queryParams.append('older_first', 'true');
 
-        const url = `https://raf-pixeldraw.aarsen.me/api/pictures${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+        // const url = `https://raf-pixeldraw.aarsen.me/api/pictures${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+        const url = `${API_ENDPOINTS.PICTURES}${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+        
+        console.log(url);
 
         const result = await handleApiCall<PictureListingPage>(() =>
             fetch(url, {
@@ -76,7 +83,7 @@ export const usePictureStore = defineStore('pictures', () => {
             total.value = result.data.total;
             return { success: true };
         } else {
-            return { success: false, error: result.error };
+            return { success: false, error: getErrorMessage(result.error) };
         }
     }
 
@@ -86,7 +93,7 @@ export const usePictureStore = defineStore('pictures', () => {
         if(existing) return {success: true, data: existing};
 
         const result = await handleApiCall<GetPictureRes>(() =>
-            fetch(`https://raf-pixeldraw.aarsen.me/api/pictures/${pictureId}`, {
+            fetch(API_ENDPOINTS.PICTURE(pictureId), {
                 headers: getAuthHeaders()
             })
         );
@@ -94,13 +101,13 @@ export const usePictureStore = defineStore('pictures', () => {
         if (result.success) {
             return { success: true, data: result.data.picture };
         } else {
-            return { success: false, error: result.error };
+            return { success: false, error: getErrorMessage(result.error) };
         }
     }
 
     async function updatePicture(pictureId: string, updates: Partial<BasePictureDto>): Promise<{ success: boolean; error?: string }> {
         const result = await handleApiCall<UpdatePictureRes>(() =>
-        fetch(`https://raf-pixeldraw.aarsen.me/api/pictures/${pictureId}`, {
+        fetch(API_ENDPOINTS.UPDATE(pictureId), {
                 method: 'PATCH',
                 headers: getAuthHeaders(),
                 body: JSON.stringify(updates)
@@ -114,13 +121,16 @@ export const usePictureStore = defineStore('pictures', () => {
             }
             return { success: true };
         } else {
-            return { success: false, error: result.error };
+            if (result.error.code == 'NOT_AUTHENTICATED' && authStore.isAuthenticated) {
+                authStore.logout();
+            }
+            return { success: false, error: getErrorMessage(result.error) };
         }
     }
 
     async function deletePicture(pictureId: string): Promise<{ success: boolean; error?: string }> {
         const result = await handleApiCall<DeletePictureRes>(() =>
-        fetch(`https://raf-pixeldraw.aarsen.me/api/pictures/${pictureId}`, {
+        fetch(API_ENDPOINTS.DELETE(pictureId), {
             method: 'DELETE',
             headers: getAuthHeaders()
         })
@@ -133,7 +143,11 @@ export const usePictureStore = defineStore('pictures', () => {
             }
             return { success: true };
         } else {
-            return { success: false, error: result.error };
+            if (result.error.code == 'NOT_AUTHENTICATED' && authStore.isAuthenticated) {
+                authStore.logout();
+            }
+
+            return { success: false, error: getErrorMessage(result.error) };
         }
     }
 

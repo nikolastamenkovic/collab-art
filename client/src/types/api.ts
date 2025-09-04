@@ -1,6 +1,18 @@
 import type { ZodIssue } from "zod/v3";
 import type { PictureDto } from "./picture";
 
+export const API_BASE_URL = 'http://localhost:3000';
+// export const API_BASE_URL = 'https://raf-pixeldraw.aarsen.me/api';
+
+export const API_ENDPOINTS = {
+    AUTH_LOGIN: `${API_BASE_URL}/auth/login`,
+    AUTH_REGISTER: `${API_BASE_URL}/auth/register`,
+    PICTURES: `${API_BASE_URL}/pictures`,
+    PICTURE: (pictureId: string) => `${API_BASE_URL}/pictures/${pictureId}`,
+    DELETE: (pictureId: string) => `${API_BASE_URL}/pictures/${pictureId}`,
+    UPDATE: (pictureId: string) => `${API_BASE_URL}/pictures/${pictureId}`,
+};
+
 export type APIErrorCommon = {
     failed: true;
     code: ErrorCode;

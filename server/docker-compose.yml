@@ -1,0 +1,31 @@
+version: "3.8"
+services:
+  database:
+    image: postgres:14
+    container_name: postgres-db
+    ports:
+      - "5432:5432" # Port na kojem PostgreSQL sluša
+    environment:
+      POSTGRES_USER: admin # Korisničko ime za bazu
+      POSTGRES_PASSWORD: admin # Lozinka za bazu
+      POSTGRES_DB: testdb # Naziv baze
+    volumes:
+      - db_data:/var/lib/postgresql/data # Trajno skladištenje podataka baze
+
+  app:
+    build:
+      context: .
+    container_name: ts-express-app
+    ports:
+      - "3000:3000" # Port na kojem aplikacija sluša
+    depends_on:
+      - database # Pokreni aplikaciju tek nakon baze
+    environment:
+      DB_HOST: database # Host baze podataka
+      DB_PORT: 5432 # Port baze podataka
+      DB_USER: admin # Korisničko ime baze
+      DB_PASSWORD: admin # Lozinka baze
+      DB_NAME: testdb # Naziv baze
+
+volumes:
+  db_data:
