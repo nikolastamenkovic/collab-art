@@ -119,7 +119,7 @@ const addComment = () => {
 .comment {
   position: relative;
   padding: 1rem;
-  padding-right: 80px; /* Reserve space for delete button */
+  padding-right: 80px;
   border-bottom: 1px solid #e0e0e0;
   background-color: #f9f9f9;
   border-radius: 8px;

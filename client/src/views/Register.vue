@@ -43,6 +43,10 @@ async function handleRegister(credentials: AuthReq) {
 
 <style scoped>
 .register {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
     padding: 1rem;
 }
 </style>

@@ -1,4 +1,16 @@
 <template>
+<div v-if="socketStore.connected"
+  v-for="cursor in Array.from(cursors.entries())"
+  :key="cursor[0]"
+  class="collaborative-cursor"
+  :style="{
+    left: `${cursor[1].x}px`,
+    top: `${cursor[1].y}px`
+  }"
+>
+  <v-icon :color="cursor[1].color" size="medium">mdi-cursor-default</v-icon>
+  <span class="cursor-username" :style="{ background: cursor[1].color }">{{ cursor[1].username }}</span>
+</div>
 <div class="draw-layout">
   <div v-if="socketStore.connected && connectedUsers.size > 0" class="user-pills">
     <div class="connection-status" :class="{ connected: socketStore.connected }">
@@ -88,7 +100,7 @@
         </div>
       </div>
     </div>
-    <div v-if="authStore.isAuthenticated && pictureId" class="like-dislike-section">
+    <div class="like-dislike-section">
       <div class="like-dislike-buttons">
         <v-btn
           @click="handleLike"
@@ -172,21 +184,15 @@
         </v-btn>
       </v-card-actions>
     </v-card>
-  </v-dialog>
-
-  <div v-if="socketStore.connected"
-    v-for="cursor in Array.from(cursors.entries())"
-    :key="cursor[0]"
-    class="collaborative-cursor"
-    :style="{
-      left: `${cursor[1].x}px`,
-      top: `${cursor[1].y}px`
-    }"
-  >
-    <v-icon :color="cursor[1].color" size="medium">mdi-cursor-default</v-icon>
-    <span class="cursor-username" :style="{ background: cursor[1].color }">{{ cursor[1].username }}</span>
-  </div>
+  </v-dialog>  
 </div>
+
+<Chat 
+    v-if="authStore.isAuthenticated && socketStore.connected"
+    :socket-connected="socketStore.connected"
+    @send-message="handleSendMessage"
+    ref="chatComponent"
+  />
 </template>
 
 <script setup lang="ts">
@@ -198,6 +204,7 @@
   import { useSocketStore } from '@/stores/SocketStore';
   import type { CursorData, CursorDataUser, PixelChangeData, UserInRoom } from '@/types/collab';
   import CommentList from '@/components/CommentList.vue';
+  import Chat from '@/components/Chat.vue';
 
   const route = useRoute();
   const router = useRouter();
@@ -223,6 +230,8 @@
   const connectedUsers = ref<Map<string, UserInRoom>>(new Map());
   const isSaving = ref<boolean>(false);
   const comments = ref<CommentDto[]>([]);
+
+  const chatComponent = ref<InstanceType<typeof Chat>>();
 
   const likeCount = ref(0);
   const dislikeCount = ref(0);
@@ -260,11 +269,15 @@
         pictureName.value = result.data.name;
         pictureUserId.value = result.data.author.user_id;
         comments.value = result.data.comments || [];
-        likeCount.value = result.data.liked_count || 0;
-        dislikeCount.value = result.data.disliked_count || 0;
+        likeCount.value = result.data.liked_by?.length || 0;
+        dislikeCount.value = result.data.disliked_by?.length || 0;
+        userReaction.value = result.data.liked_by?.includes(authStore.userId || '') ? 'like' 
+          : result.data.disliked_by?.includes(authStore.userId || '') ? 'dislike' 
+          : null;
+        // console.log(result.data);
+        // console.log('User reaction:', userReaction.value);
+        connectHere()
       }
-      console.log(result.data);
-      connectHere()
     }
   });
 
@@ -272,28 +285,24 @@
     if (!socketStore.connected) {
       socketStore.connect();
       socketStore.joinRoom(pictureId.value as string);
-      console.log('OVDE SAM: ', authStore.isAuthenticated);
 
-      cursors.value.delete(authStore.userId as string);
+      // cursors.value.delete(authStore.userId as string);
 
-      socketStore.socket?.on('joined-picture', (picture_data: string[][], users: UserInRoom[], user_reaction: 'like' | 'dislike' | null) => {
+      socketStore.socket?.on('joined-picture', (picture_data: string[][], users: UserInRoom[]) => {
         tiles.value = picture_data;
 
         connectedUsers.value.clear();
         users.forEach(user => {
           connectedUsers.value.set(user.id, user);
         });
-
-        // likeCount.value += picture.likes.length;
-        // dislikeCount.value += picture.dislikes.length;
-
-        userReaction.value = user_reaction;
+      
         console.log(`Joined picture room with ${users.length} users`);
       });
 
       socketStore.socket?.on('user-joined', (user: UserInRoom, cursor: CursorData) => {
         connectedUsers.value.set(user.id, user);
         cursors.value.set(user.id, {...cursor, username: user.username, color: '#000' });
+        console.log('CONNECTED USERS:', connectedUsers.value);
         console.log(`User ${user.username} joined the room`);
       });
 
@@ -317,6 +326,7 @@
       });
 
       socketStore.socket?.on('cursor-moved', (data: CursorData, userId: string) => {
+        // console.log('CURSOR MOVED:', data, userId);
         let cursor = cursors.value.get(userId);
         if (!cursor) {
             cursor = { x: data.x, y: data.y, username: connectedUsers.value.get(userId)?.username || 'Unknown', color: '#000' };
@@ -333,6 +343,16 @@
 
       socketStore.socket?.on('comment-delete', (commentId: string) => {
         comments.value = comments.value.filter(c => c.comment_id !== commentId);
+      });
+
+      socketStore.socket?.on('chat-message', (message: any) => {
+        chatComponent.value?.addMessage({
+          id: message.id,
+          userId: message.userId,
+          username: message.username,
+          text: message.text,
+          timestamp: new Date(message.timestamp)
+        });
       });
 
       socketStore.socket?.on('save-finished', (data: string[][]) => {
@@ -369,7 +389,8 @@
   }
 
   function handleMouseMove(event: MouseEvent) {
-    socketStore.socket?.emit('cursor-move', { x: event.pageX, y: event.pageY });
+    // socketStore.socket?.emit('cursor-move', { x: event.pageX, y: event.pageY });
+    socketStore.socket?.emit('cursor-move', { x: event.clientX, y: event.clientY });
   }
 
   async function handleAddComment(text: string) {
@@ -414,6 +435,16 @@
     cursors.value.clear();
     isSaving.value = false;
   }
+
+  function handleSendMessage(text: string) {
+  if (socketStore.connected) {
+    socketStore.socket?.emit('chat-message', {
+      text,
+      userId: authStore.userId,
+      username: authStore.username
+    });
+  }
+}
 
   function sendSaveStarted() {
     if (!socketStore.connected) return;
@@ -618,6 +649,7 @@
     if (result.success) {
       pictureId.value = result.pictureId || null;
       router.replace({ name: 'draw' , query: { id: pictureId.value } });
+      // router.push({ name: 'draw' , query: { id: pictureId.value } });
 
       successMessage.value = 'Drawing saved successfully!';
       saveDialog.value = false;
@@ -631,7 +663,6 @@
     }
     saving.value = false;
     pictureName.value = picture.name;
-    connectHere();
   }
   
   function handleMouseDown() {
@@ -799,7 +830,7 @@
 }
 
 .collaborative-cursor {
-  position: absolute;
+  position: fixed;
   z-index: 1000;
   display: flex;
   align-items: center;

@@ -58,7 +58,6 @@ const formData = reactive<AuthForm>({
     confirmPassword: ''
 });
 
-// Validation rules
 const usernameRules = [
     (v: string) => !!v || 'Username is required',
     (v: string) => v.length >= 2 || 'Username must be at least 2 characters',

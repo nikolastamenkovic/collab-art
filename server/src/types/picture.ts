@@ -13,8 +13,8 @@ export type PictureDto = BasePictureDto & {
     updated_at: string;
     comments?: CommentDto[];
     user_reaction?: `like` | `dislike` | null;
-    liked_count?: number;
-    disliked_count?: number;
+    liked_by?: string[];
+    disliked_by?: string[];
 };
 
 export type NewPictureReq = BasePictureDto

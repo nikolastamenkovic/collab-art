@@ -207,8 +207,8 @@ export const getPictureById = async (req: Request, res: Response) => {
       created_at: comment.created_at.toISOString()
     }));
 
-    const likedBy = await picture.liked_by;
-    const dislikedBy = await picture.disliked_by;
+    const likedBy = (await picture.liked_by).map(user => user.id);
+    const dislikedBy = (await picture.disliked_by).map(user => user.id);
 
     const result: PictureDto = {
       picture_id: picture.id,
@@ -221,8 +221,8 @@ export const getPictureById = async (req: Request, res: Response) => {
       created_at: picture.created_at.toISOString(),
       updated_at: picture.updated_at.toISOString(),
       comments: commentDtos,
-      liked_count: likedBy.length,
-      disliked_count: dislikedBy.length,
+      liked_by: likedBy,
+      disliked_by: dislikedBy,
     };
 
     console.log(result)

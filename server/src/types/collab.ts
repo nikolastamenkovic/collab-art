@@ -12,6 +12,7 @@ export type CursorData = {
 export type UserInRoom = {
     id: string;
     username: string;
+    user_reaction?: `like` | `dislike` | null;
 }
 
 export type RoomData = {

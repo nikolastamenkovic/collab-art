@@ -35,8 +35,6 @@ export const setupSocket = (io: Server) => {
     socket.on("join-room", async (pictureId: string) => {
       try {
         let picture = roomPictureStates.get(pictureId);
-        let user_reaction: 'like' | 'dislike' | null = null;
-
         if(!picture) {
           const pictureTmp = await pictureRepository.findOneBy({ id: pictureId });
           // console.log("Picture fetched from DB:", pictureTmp);
@@ -46,12 +44,9 @@ export const setupSocket = (io: Server) => {
             return;
           }
 
-          user_reaction = (await pictureTmp.liked_by).some(u => u.id === socket.data.user.id) ? 'like' : (await pictureTmp.disliked_by).some(u => u.id === socket.data.user.id) ? 'dislike' : null;
           picture = pictureTmp.picture_data;
           roomPictureStates.set(pictureId,  picture);
         }
-
-        console.log("Picture: ", picture);
 
         socket.data.picture_id = pictureId;
 
@@ -66,7 +61,7 @@ export const setupSocket = (io: Server) => {
         const userMap = roomUsers.get(pictureId);
         userMap.set(user.id, user);
 
-        socket.emit("joined-picture", picture, Array.from(userMap.values()), user_reaction);
+        socket.emit("joined-picture", picture, Array.from(userMap.values()));
 
         socket.to(pictureId).emit("user-joined", user);
 
@@ -76,6 +71,18 @@ export const setupSocket = (io: Server) => {
         socket.emit("error", { message: "Failed to join picture room." });
       }
     });  
+
+    socket.on("chat-message", (messageData: { text: string, userId: string, username: string }) => {
+      const message = {
+        id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+        userId: messageData.userId,
+        username: messageData.username,
+        text: messageData.text,
+        timestamp: new Date().toISOString()
+      };
+      
+      io.to(socket.data.picture_id).emit("chat-message", message);
+    });
 
     socket.on("pixel-change", (data: PixelChangeData) => {
       // console.log("Pixel change received:", data);
@@ -184,21 +191,3 @@ export const setupSocket = (io: Server) => {
     });
   });
 }
-
-// Handle new messages
-    // socket.on("message", async (data) => {
-    //   try {
-    //     const messageRepo = AppDataSource.getRepository(Message);
-    //     const newMessage = messageRepo.create({
-    //       username: socket.data.user.username,
-    //       content: data.content,
-    //     });
-
-    //     await messageRepo.save(newMessage);
-    //     console.log(`New message created: ${newMessage.content}`); // Log the new message
-    //     io.emit("message", newMessage); // Broadcast to all users
-    //   } catch (error) {
-    //     console.error("Error saving message:", error);
-    //     socket.emit("error", { message: "Failed to send message." });
-    //   }
-    // });

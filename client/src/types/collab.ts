@@ -23,3 +23,11 @@ export type RoomData = {
 }
 
 export type CursorDataUser = CursorData & { username: string, color: string }
+
+export type ChatMessage = {
+  id: string;
+  userId: string;
+  username: string;
+  text: string;
+  timestamp: Date;
+}

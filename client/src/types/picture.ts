@@ -11,8 +11,8 @@ export type PictureDto = BasePictureDto & {
   updated_at: string;
   author: Author;
   comments?: CommentDto[];
-  liked_count?: number;
-  disliked_count?: number;
+  liked_by?: string[];
+  disliked_by?: string[];
   user_reaction?: 'like' | 'dislike' | null;
 }
 
