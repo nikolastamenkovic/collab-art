@@ -1,5 +1,6 @@
 # Skript jezici 2024
 
-Ime i prezime: XXXXX
+Ime i prezime: Nikola Stamenkovic
 
-Broj indeksa:  XXXXX
+Broj indeksa:  RN 28/20
+
