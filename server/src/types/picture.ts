@@ -11,6 +11,10 @@ export type PictureDto = BasePictureDto & {
     };
     created_at: string;
     updated_at: string;
+    comments?: CommentDto[];
+    user_reaction?: `like` | `dislike` | null;
+    liked_count?: number;
+    disliked_count?: number;
 };
 
 export type NewPictureReq = BasePictureDto
@@ -18,6 +22,16 @@ export type NewPictureReq = BasePictureDto
 export type NewPictureRes = {
         failed: false;
         picture_id: string;
+}
+
+export type CommentDto = {
+    comment_id: string;
+    text: string;
+    author: {
+        user_id: string;
+        username: string;
+    }; 
+    created_at: string;
 }
 
 export type PictureListingPage = {

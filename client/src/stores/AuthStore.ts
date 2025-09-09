@@ -28,9 +28,13 @@ export const useAuthStore = defineStore("auth", () => {
                 userId.value = loginData.user_id;
                 isAuthenticated.value = true;
 
-                localStorage.setItem("token", loginData.token);
-                localStorage.setItem("username", loginData.username);
-                localStorage.setItem("userId", loginData.user_id);
+                sessionStorage.setItem("token", loginData.token);
+                sessionStorage.setItem("username", loginData.username);
+                sessionStorage.setItem("userId", loginData.user_id);
+
+                // localStorage.setItem("token", loginData.token);
+                // localStorage.setItem("username", loginData.username);
+                // localStorage.setItem("userId", loginData.user_id);
 
                 return { success: true };
             }
@@ -71,9 +75,13 @@ export const useAuthStore = defineStore("auth", () => {
         userId.value = null;
         isAuthenticated.value = false;
 
-        localStorage.removeItem("token");
-        localStorage.removeItem("username");
-        localStorage.removeItem("userId");
+        sessionStorage.removeItem("token");
+        sessionStorage.removeItem("username");
+        sessionStorage.removeItem("userId");
+
+        // localStorage.removeItem("token");
+        // localStorage.removeItem("username");
+        // localStorage.removeItem("userId");
     }
 
     return {

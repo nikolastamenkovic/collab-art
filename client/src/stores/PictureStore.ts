@@ -1,9 +1,9 @@
 import { defineStore } from 'pinia';
-import type { PictureDto, BasePictureDto }  from '@/types/picture';
+import type { PictureDto, BasePictureDto, CommentDto }  from '@/types/picture';
 import { ref,reactive } from 'vue';
 import { useAuthStore } from './AuthStore';
-import type { APIErrorCommon, PictureListingPage, GetPictureRes, UpdatePictureRes } from '@/types/api';
-import type { PictureQueryParams, NewPictureRes, DeletePictureRes } from '@/types/api';
+import type { APIErrorCommon, PictureListingPage, GetPictureRes, UpdatePictureRes, DeleteCommentRes } from '@/types/api';
+import type { AddCommentRes, PictureQueryParams, NewPictureRes, DeletePictureRes } from '@/types/api';
 import { API_ENDPOINTS, getErrorMessage } from '@/types/api';
 
 export const usePictureStore = defineStore('pictures', () => {
@@ -70,13 +70,15 @@ export const usePictureStore = defineStore('pictures', () => {
         // const url = `https://raf-pixeldraw.aarsen.me/api/pictures${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
         const url = `${API_ENDPOINTS.PICTURES}${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
         
-        console.log(url);
+        // console.log(url);
 
         const result = await handleApiCall<PictureListingPage>(() =>
             fetch(url, {
                 headers: getAuthHeaders()
             })
         );
+
+        // console.log(result);
 
         if (result.success) {
             pictures.splice(0, pictures.length, ...result.data.pictures);
@@ -90,7 +92,7 @@ export const usePictureStore = defineStore('pictures', () => {
     async function getPictureById(pictureId: string): Promise<{ success: boolean; data?: PictureDto; error?: string }> {
         const existing = pictures.find(p => p.picture_id === pictureId);
 
-        if(existing) return {success: true, data: existing};
+        // if(existing) return {success: true, data: existing};
 
         const result = await handleApiCall<GetPictureRes>(() =>
             fetch(API_ENDPOINTS.PICTURE(pictureId), {
@@ -128,6 +130,65 @@ export const usePictureStore = defineStore('pictures', () => {
         }
     }
 
+    async function addComment(pictureId: string,text: string): Promise<{ success: boolean; error?: string; comment?: CommentDto }> {
+        const result = await handleApiCall<AddCommentRes>(() =>
+            fetch(API_ENDPOINTS.ADD_COMMENT(pictureId), {
+                method: 'POST',
+                headers: getAuthHeaders(),
+                body: JSON.stringify({ text })
+            })
+        );
+
+        if (result.success) {
+            return { success: true, comment: result.data.comment };
+        } else {
+            return { success: false, error: getErrorMessage(result.error) };
+        }
+    }
+
+    async function likePicture(pictureId: string): Promise<{ success: boolean; error?: string }> {
+        const result = await handleApiCall<UpdatePictureRes>(() =>
+        fetch(`${API_ENDPOINTS.LIKE_PICTURE(pictureId)}`, {
+                method: 'PUT',
+                headers: getAuthHeaders()
+            })
+        );
+        if (result.success) {
+            return { success: true };
+        } else {
+            return { success: false, error: getErrorMessage(result.error) };
+        }
+    }
+
+    async function dislikePicture(pictureId: string): Promise<{ success: boolean; error?: string }> {
+        const result = await handleApiCall<UpdatePictureRes>(() =>
+        fetch(`${API_ENDPOINTS.DISLIKE_PICTURE(pictureId)}`, {
+                method: 'PUT',
+                headers: getAuthHeaders()
+            })
+        );
+        if (result.success) {
+            return { success: true };
+        } else {
+            return { success: false, error: getErrorMessage(result.error) };
+        }
+    }
+
+    async function deleteComment(commentId: string): Promise<{ success: boolean; error?: string }> {
+        const result = await handleApiCall<DeleteCommentRes>(() =>
+            fetch(API_ENDPOINTS.DELETE_COMMENT(commentId), {
+                method: 'DELETE',
+                headers: getAuthHeaders()
+            })
+        );
+
+        if (result.success) {
+            return { success: true };
+        } else {
+            return { success: false, error: getErrorMessage(result.error) };
+        }
+    }
+
     async function deletePicture(pictureId: string): Promise<{ success: boolean; error?: string }> {
         const result = await handleApiCall<DeletePictureRes>(() =>
         fetch(API_ENDPOINTS.DELETE(pictureId), {
@@ -158,6 +219,10 @@ export const usePictureStore = defineStore('pictures', () => {
         loadPictures,
         getPictureById,
         updatePicture,
-        deletePicture
+        deletePicture,
+        addComment,
+        deleteComment,
+        likePicture,
+        dislikePicture
     };
 })

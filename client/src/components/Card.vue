@@ -4,9 +4,7 @@
       class="mini-grid"
       :style="{
         gridTemplateColumns: `repeat(${pic.picture_data.length}, 1fr)`,
-        gridTemplateRows: `repeat(${pic.picture_data.length}, 1fr)`,
-        width: `${gridSize}px`,
-        height: `${gridSize}px`
+        gridTemplateRows: `repeat(${pic.picture_data.length}, 1fr)`
       }"
     >
       <div
@@ -20,8 +18,8 @@
           class="mini-tile"
           :style="{ 
             background: tile,
-            width: `${tileSize}px`,
-            height: `${tileSize}px`
+            width: `${250 / pic.picture_data.length}px`,
+            height: `${250 / pic.picture_data.length}px`
           }"
         />
       </div>
@@ -133,11 +131,7 @@
     const editingName = ref('');
     const saving = ref(false);
 
-    const availableSpace = 240;
-
-    const gridSize = computed(() => availableSpace);
     const pictureDimension = computed(() => props.pic.picture_data.length);
-    const tileSize = computed(() => Math.floor(availableSpace / pictureDimension.value));
 
     const nameRules = [
         (v: string) => !!v?.trim() || 'Picture name is required',
@@ -167,7 +161,7 @@
     }
 
     function filterByAuthor() {
-        emit('filter', props.pic.author);
+      emit('filter', props.pic.author);
     }
 
     async function rename() {
@@ -193,32 +187,28 @@
   padding: 1rem;
   background: white;
   cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 0.75rem;
   width: 100%;
-  min-width: 200px;
-  max-width: 300px;
-}
-
-.picture-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  height: 100%;
 }
 
 .mini-grid {
   display: grid;
-  gap: 0;
-  width: 100%;
-  height: 100%;
+  width: 250px;
+  height: 250px;
+  /* height: 100%; */
+  aspect-ratio: 1/1;
 }
 
 .mini-tile {
-  width: 100%;
-  height: 100%;
+  /* width: 100%;
+  height: 100%; */
   border: 1px solid #eee;
   box-sizing: border-box;
+  aspect-ratio:1/1;
 }
 
 .picture-info {
@@ -227,12 +217,11 @@
 }
 
 .name {
-  font-size: 0.75rem;
+  font-size: 1.25rem;
   font-weight: bold;
   margin: 0 0 0.5rem 0;
   color: #333;
   word-break: break-word;
-  line-height: 1.4;
 }
 
 .edit-title-container {
@@ -240,7 +229,7 @@
 }
 
 .edit-input {
-  font-size: 0.9rem;
+  font-size: 1.25rem;
 }
 
 .edit-input :deep(.v-field__input) {
@@ -250,7 +239,7 @@
 }
 
 .author {
-  font-size: 0.5rem; 
+  font-size: 0.75rem; 
   color: #666;
 }
 
@@ -270,11 +259,10 @@
   display: flex;
   gap: 0.5rem;
   justify-content: center;
-  margin-top: 0.5rem;
+  margin-top: 0.25rem;
   flex-wrap: wrap;
 }
 
-/* Ensure buttons are properly sized */
 .picture-actions .v-btn {
   font-size: 0.75rem;
 }

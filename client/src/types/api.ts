@@ -1,5 +1,5 @@
 import type { ZodIssue } from "zod/v3";
-import type { PictureDto } from "./picture";
+import type { CommentDto, PictureDto } from "./picture";
 
 export const API_BASE_URL = 'http://localhost:3000';
 // export const API_BASE_URL = 'https://raf-pixeldraw.aarsen.me/api';
@@ -11,6 +11,10 @@ export const API_ENDPOINTS = {
     PICTURE: (pictureId: string) => `${API_BASE_URL}/pictures/${pictureId}`,
     DELETE: (pictureId: string) => `${API_BASE_URL}/pictures/${pictureId}`,
     UPDATE: (pictureId: string) => `${API_BASE_URL}/pictures/${pictureId}`,
+    ADD_COMMENT: (pictureId: string) => `${API_BASE_URL}/pictures/${pictureId}/comment`,
+    DELETE_COMMENT: (commentId: string) => `${API_BASE_URL}/pictures/comment/${commentId}`,
+    LIKE_PICTURE: (pictureId: string) => `${API_BASE_URL}/pictures/${pictureId}/like`,
+    DISLIKE_PICTURE: (pictureId: string) => `${API_BASE_URL}/pictures/${pictureId}/dislike`,
 };
 
 export type APIErrorCommon = {
@@ -43,8 +47,8 @@ export type RegisterResponse = {
 }
 
 export type NewPictureRes = {
-failed: false;
-picture_id: string;
+    failed: false;
+    picture_id: string;
 }
 
 export type PictureQueryParams = {
@@ -70,6 +74,15 @@ total: number;
 export type GetPictureRes = {
 failed: false;
 picture: PictureDto;
+}
+
+export type AddCommentRes = {
+    failed: false;
+    comment: CommentDto;
+}
+
+export type DeleteCommentRes = {
+    failed: false;
 }
 
 type ErrorCode =

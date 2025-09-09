@@ -9,21 +9,29 @@
 <template>
   <Navbar />
 
-  <div>
+  <div class="router-container">
     <RouterView />
   </div>
 </template>
 
 <style>
-
-  /* Override all Vuetify component text sizes */
+  
   .v-application {
     font-size: 12px !important;
   }
 
-  /* Specific Vuetify component overrides */
   .v-btn {
     font-size: 12px !important;
+  }
+
+ .router-container {
+    width: 100%;
+    min-height: 100vh;
+    padding-top: 80px; 
+  }
+
+  .router-container > * {
+    width: 100%;
   }
 
   .v-text-field input,
@@ -44,6 +52,8 @@
     flex-direction: column;
     align-items: center;
     font-family: 'Press Start 2P';
+    width: 100%;
+    height: 100%;
     font-size: 8px;
   }
 

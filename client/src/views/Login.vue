@@ -45,6 +45,10 @@
 
 <style scoped>
 .login {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
     padding: 1rem;
 }
 </style>

@@ -2,10 +2,12 @@ import { Request, Response } from "express";
 import { AppDataSource } from "../data-source";
 import { Picture } from "../entities/Picture";
 import { User } from "../entities/User";
-import { DeletePictureRes, GetPictureRes, NewPictureRes, PictureDto, PictureListingPage, UpdatePictureRes } from "../types/picture";
+import { CommentDto, DeletePictureRes, GetPictureRes, NewPictureRes, PictureDto, PictureListingPage, UpdatePictureRes } from "../types/picture";
+import { Comment } from "../entities/Comment";
 
 const pictureRepository = AppDataSource.getRepository(Picture);
 const userRepository = AppDataSource.getRepository(User);
+const commentRepository = AppDataSource.getRepository(Comment);
 
 export const getPictures = async (req: Request, res: Response) => {
   try {
@@ -54,6 +56,133 @@ export const getPictures = async (req: Request, res: Response) => {
   }
 };
 
+export const likePicture = async (req: Request, res: Response) => {
+  try {
+    const pictureId = req.params.id;
+    const picture = await pictureRepository.findOneBy({ id: pictureId });
+
+    if (!picture) {
+      return res.status(404).json({ failed: true, code: "NO_SUCH_ENTITY" });
+    }
+
+    const user = await userRepository.findOneBy({ id: req.user?.id });
+    if (!user) {
+      return res.status(404).json({ failed: true, code: "NO_SUCH_ENTITY" });
+    }
+
+    const likedBy = await picture.liked_by;
+
+    const likeIndex = likedBy.findIndex(u => u.id === user.id);
+    if (likeIndex === -1) {
+      likedBy.push(user);
+      await pictureRepository.save(picture);
+      return res.status(200).json({ failed: false });
+    } else {
+      likedBy.splice(likeIndex, 1);
+      await pictureRepository.save(picture);
+      return res.status(200).json({ failed: false });
+    }
+  } catch (error) {
+    res.status(500).json({ failed: true, code: "INTERNAL_ERROR" });
+  }
+};
+
+export const dislikePicture = async (req: Request, res: Response) => {
+  try {
+    const pictureId = req.params.id;
+    const picture = await pictureRepository.findOneBy({ id: pictureId });
+
+    if (!picture) {
+      return res.status(404).json({ failed: true, code: "NO_SUCH_ENTITY" });
+    }
+
+    const user = await userRepository.findOneBy({ id: req.user?.id });
+    if (!user) {
+      return res.status(404).json({ failed: true, code: "NO_SUCH_ENTITY" });
+    }
+
+    const dislikedBy = await picture.disliked_by;
+
+    const dislikeIndex = dislikedBy.findIndex(u => u.id === user.id);
+    if (dislikeIndex === -1) {
+      dislikedBy.push(user);
+      await pictureRepository.save(picture);
+      return res.status(200).json({ failed: false });
+    } else {
+      dislikedBy.splice(dislikeIndex, 1);
+      await pictureRepository.save(picture);
+      return res.status(200).json({ failed: false });
+    }
+  } catch (error) {
+    res.status(500).json({ failed: true, code: "INTERNAL_ERROR" });
+  }
+};
+
+export const commentPicture = async (req: Request, res: Response) => {
+  try {
+    const pictureId = req.params.id;
+    const picture = await pictureRepository.findOneBy({ id: pictureId });
+
+    if (!picture) {
+      return res.status(404).json({ failed: true, code: "NO_SUCH_ENTITY" });
+    }
+
+    const user = await userRepository.findOneBy({ id: req.user?.id });
+    if (!user) {
+      return res.status(404).json({ failed: true, code: "NO_SUCH_ENTITY" });
+    }
+
+    const text = req.body.text;
+
+    const newComment = commentRepository.create({
+      text,
+      author: user,
+      picture
+    });
+    const savedComment = await commentRepository.save(newComment);
+
+    const response:CommentDto = {
+      comment_id: savedComment.id,
+      text: savedComment.text,
+      author: {
+        user_id: user.id,
+        username: user.username
+      },
+      created_at: savedComment.created_at.toISOString()
+    }
+
+    res.status(201).json({ failed: false, comment: response });
+  } catch (error) {
+    res.status(500).json({ failed: true, code: "INTERNAL_ERROR" });
+  }
+};
+
+export const deleteComment = async (req: Request, res: Response) => {
+  try {
+    const commentId = req.params.id;
+    const comment = await commentRepository.findOneBy({ id: commentId });
+
+    if (!comment) {
+      return res.status(404).json({ failed: true, code: "NO_SUCH_ENTITY" });
+    }
+
+    // const user = await userRepository.findOneBy({ id: req.user?.id });
+    // if (!user) {
+    //   return res.status(404).json({ failed: true, code: "NO_SUCH_ENTITY" });
+    // }
+
+    if (comment.author.id !== req.user?.id) {
+      return res.status(403).json({ failed: true, code: "NOT_YOURS" });
+    }
+
+    await commentRepository.remove(comment);
+
+    res.status(200).json({ failed: false });
+  } catch (error) {
+    res.status(500).json({ failed: true, code: "INTERNAL_ERROR" });
+  }
+};
+
 export const getPictureById = async (req: Request, res: Response) => {
   try {
     const pictureId = req.params.id;
@@ -62,6 +191,24 @@ export const getPictureById = async (req: Request, res: Response) => {
     if (!picture) {
       return res.status(404).json({ failed: true, code: "NO_SUCH_ENTITY" });
     }
+
+    const comments = await commentRepository.find({
+      where: { picture: { id: pictureId } },
+      order: { created_at: 'DESC' }
+    });
+
+    const commentDtos: CommentDto[] = comments.map((comment): CommentDto => ({
+      comment_id: comment.id,
+      text: comment.text,
+      author: {
+        user_id: comment.author.id,
+        username: comment.author.username
+      },
+      created_at: comment.created_at.toISOString()
+    }));
+
+    const likedBy = await picture.liked_by;
+    const dislikedBy = await picture.disliked_by;
 
     const result: PictureDto = {
       picture_id: picture.id,
@@ -72,8 +219,13 @@ export const getPictureById = async (req: Request, res: Response) => {
       },
       picture_data: picture.picture_data,
       created_at: picture.created_at.toISOString(),
-      updated_at: picture.updated_at.toISOString()
+      updated_at: picture.updated_at.toISOString(),
+      comments: commentDtos,
+      liked_count: likedBy.length,
+      disliked_count: dislikedBy.length,
     };
+
+    console.log(result)
 
     const getPictureRes: GetPictureRes = {
       failed: false,

@@ -32,6 +32,14 @@ export const authenticate = (
         return res.status(401).json(error);
     }
 
+    if (!payload.id || !payload.username) {
+        const error: APIErrorCommon = {
+            failed: true,
+            code: "NOT_AUTHENTICATED"
+        }
+        return res.status(401).json(error);
+    }
+
     req.user = {
         id: payload.id,
         username: payload.username

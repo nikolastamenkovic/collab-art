@@ -1,5 +1,5 @@
 <template>
-    <nav>
+    <nav class="fixed-navbar">
         <span class="pixel-art-title">Collab Art</span>
         <v-btn
             :to="{ name: 'draw' }"
@@ -7,7 +7,7 @@
             size="x-large"
         >
             <v-icon class="rainbow-text" icon="mdi-pencil" />
-            <span class="rainbow-text">DRAW!</span>
+            <span class="rainbow-text">NEW DRAWING</span>
         </v-btn>
 
         <v-btn :to="{ name: 'home' }" color="#FF0000" :variant="route.name === 'home' ? 'elevated' : 'tonal'">
@@ -71,7 +71,12 @@
 </script>
 
 <style scoped>
-    nav {
+    .fixed-navbar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 1000;
         background-color: black;
         padding: 1rem;
         text-align: center;
@@ -80,10 +85,11 @@
         justify-content: right;
         gap: 1rem;
         align-items: center;
-        position: relative;
+        height: 80px;
+        box-sizing: border-box;
     }
-    
-    nav::after {
+
+    .fixed-navbar::after {
         content: "";
         position: absolute;
         left: 0;

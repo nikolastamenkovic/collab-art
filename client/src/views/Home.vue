@@ -17,7 +17,7 @@
     <div class="text">
       <h1>Draw pixel art together!</h1>
       <div class="buttons">
-        <v-btn :to="{ name: 'draw' }" color="primary" size="large">
+        <v-btn :to="{ name: 'draw' }" size="large" style="background: linear-gradient(to right, #FF0000, #00FF00, #0000FF);">
           Start Drawing
         </v-btn>
         <v-btn :to="{ name: 'gallery' }" variant="outlined" size="large">

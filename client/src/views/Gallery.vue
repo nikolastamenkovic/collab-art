@@ -25,15 +25,17 @@
       <p>No pictures found.</p>
     </div>
 
-    <div v-else class="pictures-grid">
-      <PictureCard
-        v-for="picture in pictureStore.pictures"
-        :key="picture.picture_id"
-        :pic="picture"
-        @rename="handleUpdateName"
-        @delete="showDeleteDialog"
-        @filter="handleFilter"
-      />
+    <div v-else class="pictures-scroll">
+      <div class="pictures-grid">
+        <PictureCard
+          v-for="picture in pictureStore.pictures"
+          :key="picture.picture_id"
+          :pic="picture"
+          @rename="handleUpdateName"
+          @delete="showDeleteDialog"
+          @filter="handleFilter"
+        />
+      </div>
     </div>
 
     <div class="pagination" v-if="totalPages > 1">
@@ -208,6 +210,8 @@ async function confirmDelete() {
   if (result.success) {
     successMessage.value = 'Picture deleted successfully!';
 
+    await loadPage(currentPage.value);
+
     setTimeout(() => {
       successMessage.value = null;
     }, 3000);
@@ -242,7 +246,8 @@ onMounted(async () => {
   padding: 1rem;
   flex-direction: column;
   align-items: center;
-  max-width: 1400px;
+  width: 100%;
+  overflow: visible;
 }
 
 .gallery-controls {
@@ -261,13 +266,22 @@ onMounted(async () => {
   gap: 3rem;
 }
 
+/* .pictures-scroll {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow-x: auto;
+  overflow-y: visible;
+} */
+
 .pictures-grid {
   display: grid;
+  width: 1200px;
   grid-template-columns: repeat(3, 1fr);
   gap: 2rem;
-  width: 100%;
-  max-width: 1200px; 
   justify-items: center;
+  grid-auto-rows: 450px;
 }
 
 .loading,
