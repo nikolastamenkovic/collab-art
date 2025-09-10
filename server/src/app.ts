@@ -13,20 +13,20 @@ const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
     cors: {
-        origin: "http://localhost:5173",
+        origin: "*",
         credentials: true
     }
 });
 
 app.use(cors({
-    origin: 'http://localhost:5173'
+    origin: '*'
 }));
 
 app.use(express.json());
 
 AppDataSource.initialize()
     .then(async () => {
-        console.log("Baza podataka uspešno povezana!");
+        console.log("Database connected successfully!");
 
         await seedDatabase();
 
@@ -34,12 +34,12 @@ AppDataSource.initialize()
         app.use("/pictures", pictureRoutes);
 
         setupSocket(io);
-        const port = process.env.PORT || 3000; //ovo je za backend
+        const port = process.env.PORT || 3001;
         httpServer.listen(port, () => {
-            console.log(`Server pokrenut na http://localhost:${port}`);
+            console.log(`Server running at http://localhost:${port}`);
         });
     })
     .catch((error) => {
-        console.error("Greška prilikom povezivanja s bazom podataka:", error);
+        console.error("Error occurred while connecting to database:", error);
     }
 );

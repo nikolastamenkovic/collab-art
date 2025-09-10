@@ -13,11 +13,10 @@ services:
       - db_data:/var/lib/postgresql/data # Trajno skladištenje podataka baze
 
   app:
-    build:
-      context: .
+    build: ./server
     container_name: ts-express-app
     ports:
-      - "3000:3000" # Port na kojem aplikacija sluša
+      - "3001:3001" # Port na kojem aplikacija sluša
     depends_on:
       - database # Pokreni aplikaciju tek nakon baze
     environment:
@@ -26,6 +25,14 @@ services:
       DB_USER: admin # Korisničko ime baze
       DB_PASSWORD: admin # Lozinka baze
       DB_NAME: testdb # Naziv baze
+
+  frontend:
+    build: ./client
+    container_name: frontend-app
+    ports:
+      - "3000:3000" # Port na kojem aplikacija sluša
+    depends_on:
+      - app # Pokreni frontend tek nakon backend-a
 
 volumes:
   db_data:

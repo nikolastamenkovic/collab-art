@@ -225,7 +225,7 @@ export const getPictureById = async (req: Request, res: Response) => {
       disliked_by: dislikedBy,
     };
 
-    console.log(result)
+    // console.log(result)
 
     const getPictureRes: GetPictureRes = {
       failed: false,

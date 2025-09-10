@@ -1,4 +1,4 @@
-FROM node:16
+FROM node:20
 
 # Postavljamo radni direktorijum unutar kontejnera
 WORKDIR /usr/src/app
@@ -10,11 +10,11 @@ RUN npm install
 # Kopiramo ceo projekat
 COPY . .
 
-# Kompajliramo TypeScript kod
+# Build-ujemo vue aplikaciju
 RUN npm run build
 
 # Eksponiramo port aplikacije
-EXPOSE 3000
+EXPOSE 3001
 
 # Pokrećemo aplikaciju
 CMD ["node", "dist/app.js"]

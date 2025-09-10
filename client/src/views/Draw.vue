@@ -278,6 +278,13 @@
         // console.log('User reaction:', userReaction.value);
         connectHere()
       }
+      else {
+        router.replace({ name: 'draw' });
+        // errorMessage.value = result.error || 'Failed to load drawing';
+        // setTimeout(() => {
+        //   errorMessage.value = null;
+        // }, 3000);
+      }
     }
   });
 
@@ -302,7 +309,7 @@
       socketStore.socket?.on('user-joined', (user: UserInRoom, cursor: CursorData) => {
         connectedUsers.value.set(user.id, user);
         cursors.value.set(user.id, {...cursor, username: user.username, color: '#000' });
-        console.log('CONNECTED USERS:', connectedUsers.value);
+        // console.log('CONNECTED USERS:', connectedUsers.value);
         console.log(`User ${user.username} joined the room`);
       });
 
@@ -388,9 +395,18 @@
     }
   }
 
+  watch(() => socketStore.connected, (connected) => {
+    if (connected) {
+      window.addEventListener('mousemove', handleMouseMove);
+    } else {
+      window.removeEventListener('mousemove', handleMouseMove);
+      clearRoom();
+    }
+  });
+
   function handleMouseMove(event: MouseEvent) {
-    // socketStore.socket?.emit('cursor-move', { x: event.pageX, y: event.pageY });
-    socketStore.socket?.emit('cursor-move', { x: event.clientX, y: event.clientY });
+    socketStore.socket?.emit('cursor-move', { x: event.pageX, y: event.pageY });
+    // socketStore.socket?.emit('cursor-move', { x: event.clientX, y: event.clientY });
   }
 
   async function handleAddComment(text: string) {

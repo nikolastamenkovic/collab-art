@@ -7,19 +7,27 @@ export const useSocketStore = defineStore('socket', () => {
   const socket = ref<Socket | null>(null);
   const connected = ref(!!socket.value);
   const authStore = useAuthStore();
+  const currentRoomId = ref<string | null>(null);
 
   function connect() {
     if (socket.value?.connected || !authStore.isAuthenticated) return;
 
-    socket.value = io('http://localhost:3000', {
+    socket.value = io('http://localhost:3001', {
       auth: {
         token: `Bearer ${authStore.token}`
-      }
+      },
+      reconnection: true,
+      reconnectionAttempts: Infinity,
+      reconnectionDelay: 1000
     });
 
     socket.value.on('connect', () => {
       connected.value = true;
       console.log('Connected to socket server');
+
+      if (currentRoomId.value) {
+        socket.value?.emit('join-room', currentRoomId.value);
+      }
     });
 
     socket.value.on('disconnect', () => {
@@ -37,6 +45,7 @@ export const useSocketStore = defineStore('socket', () => {
       socket.value.disconnect();
       socket.value = null;
       connected.value = false;
+      currentRoomId.value = null;
     }
   }
 
@@ -45,6 +54,7 @@ export const useSocketStore = defineStore('socket', () => {
       console.error('Socket not connected');
       return;
     }
+    currentRoomId.value = id;
     socket.value?.emit('join-room', id);
   }
 

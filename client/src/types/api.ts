@@ -1,7 +1,7 @@
 import type { ZodIssue } from "zod/v3";
 import type { CommentDto, PictureDto } from "./picture";
 
-export const API_BASE_URL = 'http://localhost:3000';
+export const API_BASE_URL = 'http://localhost:3001';
 // export const API_BASE_URL = 'https://raf-pixeldraw.aarsen.me/api';
 
 export const API_ENDPOINTS = {
