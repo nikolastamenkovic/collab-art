@@ -3,17 +3,15 @@ import { AppDataSource } from "./data-source";
 import { verifyToken } from "./auth/jwtUtils";
 import { CursorData, PixelChangeData, UserInRoom } from "./types/collab";
 import { Picture } from "./entities/Picture";
-import { BasePictureDto, CommentDto, PictureDto } from "./types/picture";
-import { User } from "./entities/User";
-import { Comment } from "./entities/Comment";
+import { CommentDto } from "./types/picture";
 
 const roomUsers = new Map<string, Map<string, UserInRoom>>();
 const roomPictureStates = new Map<string, string[][]>();
 
 export const setupSocket = (io: Server) => {
   const pictureRepository = AppDataSource.getRepository(Picture);
-  const userRepository = AppDataSource.getRepository(User);
-  const commentRepository = AppDataSource.getRepository(Comment);
+  // const userRepository = AppDataSource.getRepository(User);
+  // const commentRepository = AppDataSource.getRepository(Comment);
   io.use((socket, next) => {
     const token = socket.handshake.auth.token?.split(" ")[1];
     if (!token) {
@@ -149,37 +147,6 @@ export const setupSocket = (io: Server) => {
         userMap.delete(socket.data.user.id);
 
         if (userMap.size === 0) {
-          // const roomData = roomPictureStates.get(socket.data.picture_id);
-          // const pictureId = socket.data.picture_id;
-          // const picture = await pictureRepository.findOneBy({ id: pictureId });
-          
-          // if (!picture) {
-          //   console.error(`Picture with ID ${pictureId} not found in DB during room cleanup.`);
-          //   roomUsers.delete(socket.data.picture_id);
-          //   roomPictureStates.delete(socket.data.picture_id);
-          //   return;
-          // }
-
-          // const likedBy = await picture.liked_by;
-          
-          // for (let i = 0; i < roomData.likes.length; i++) {
-          //   const user = await userRepository.findOneBy({ id: roomData.likes[i] });
-          //   if (user) {
-          //     likedBy.push(user);
-          //   }
-          // }
-
-          // const dislikedBy = await picture.disliked_by;
-          
-          // for (let i = 0; i < roomData.dislikes.length; i++) {
-          //   const user = await userRepository.findOneBy({ id: roomData.dislikes[i] });
-          //   if (user) {
-          //     dislikedBy.push(user);
-          //   }
-          // }
-
-          // await pictureRepository.save(picture);
-
           roomUsers.delete(socket.data.picture_id);
           roomPictureStates.delete(socket.data.picture_id);
           console.log(`Room ${socket.data.picture_id} deleted due to no users.`);

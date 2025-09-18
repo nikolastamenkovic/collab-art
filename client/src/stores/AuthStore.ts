@@ -28,9 +28,9 @@ export const useAuthStore = defineStore("auth", () => {
                 userId.value = loginData.user_id;
                 isAuthenticated.value = true;
 
-                sessionStorage.setItem("token", loginData.token);
-                sessionStorage.setItem("username", loginData.username);
-                sessionStorage.setItem("userId", loginData.user_id);
+                // sessionStorage.setItem("token", loginData.token);
+                // sessionStorage.setItem("username", loginData.username);
+                // sessionStorage.setItem("userId", loginData.user_id);
 
                 // localStorage.setItem("token", loginData.token);
                 // localStorage.setItem("username", loginData.username);
@@ -75,9 +75,9 @@ export const useAuthStore = defineStore("auth", () => {
         userId.value = null;
         isAuthenticated.value = false;
 
-        sessionStorage.removeItem("token");
-        sessionStorage.removeItem("username");
-        sessionStorage.removeItem("userId");
+        // sessionStorage.removeItem("token");
+        // sessionStorage.removeItem("username");
+        // sessionStorage.removeItem("userId");
 
         // localStorage.removeItem("token");
         // localStorage.removeItem("username");

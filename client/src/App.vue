@@ -1,16 +1,13 @@
 <script setup lang="ts">
   import Navbar from '@/components/Navbar.vue';
   import { RouterView } from 'vue-router';
-
-  import { ref } from 'vue'
-
 </script>
 
 <template>
   <Navbar />
 
   <div class="router-container">
-    <RouterView :key="$route.fullPath"/>
+    <RouterView />
   </div>
 </template>
 

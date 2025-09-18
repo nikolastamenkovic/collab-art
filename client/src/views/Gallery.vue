@@ -25,17 +25,15 @@
       <p>No pictures found.</p>
     </div>
 
-    <div v-else class="pictures-scroll">
-      <div class="pictures-grid">
-        <PictureCard
-          v-for="picture in pictureStore.pictures"
-          :key="picture.picture_id"
-          :pic="picture"
-          @rename="handleUpdateName"
-          @delete="showDeleteDialog"
-          @filter="handleFilter"
-        />
-      </div>
+    <div v-else class="pictures-grid">
+      <PictureCard
+        v-for="picture in pictureStore.pictures"
+        :key="picture.picture_id"
+        :pic="picture"
+        @rename="handleUpdateName"
+        @delete="showDeleteDialog"
+        @filter="handleFilter"
+      />
     </div>
 
     <div class="pagination" v-if="totalPages > 1">
@@ -97,7 +95,6 @@ import { usePictureStore } from '@/stores/PictureStore';
 import PictureCard from '@/components/Card.vue';
 import type Author from '@/types/author';
 import { useRoute,useRouter } from 'vue-router';
-import { useAuthStore } from '@/stores/AuthStore';
 
 const pictureStore = usePictureStore();
 const currentPage = ref(1);
@@ -109,7 +106,6 @@ const errorMessage = ref<string | null>(null);
 const authorFilter = ref<Author | null>(null);
 const route = useRoute();
 const router = useRouter();
-const authStore = useAuthStore();
 const deleteDialog = ref<boolean>(false);
 const pictureToDelete = ref<string | null>(null);
 
@@ -185,15 +181,15 @@ async function handleUpdateName(pictureId: string, newName: string) {
   const result = await pictureStore.updatePicture(pictureId, { name: newName });
   
   if (result.success) {
-    const picture = pictureStore.pictures.find(p => p.picture_id === pictureId);
-    if (picture) {
-      picture.name = newName;
-    }
+    // const picture = pictureStore.pictures.find(p => p.picture_id === pictureId);
+    // if (picture) {
+    //   picture.name = newName;
+    // }
     successMessage.value = 'Picture name updated successfully!';
     
     setTimeout(() => {
       successMessage.value = null;
-    }, 3000);
+    }, 2000);
   } else {
     errorMessage.value = result.error || 'Failed to update picture name';
   }
@@ -214,7 +210,7 @@ async function confirmDelete() {
 
     setTimeout(() => {
       successMessage.value = null;
-    }, 3000);
+    }, 2000);
   } else {
     errorMessage.value = result.error || 'Failed to delete picture';
   }

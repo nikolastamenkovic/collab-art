@@ -9,11 +9,11 @@ const userRepository = AppDataSource.getRepository(User);
 
 export const login = async (req: Request, res: Response) => {
   try {
-    const loginReq: LoginReq = req.body;
-
     if (req.headers.authorization) {
       return res.status(401).json({ failed: true, code: "LOGGED_IN" });
     }
+
+    const loginReq: LoginReq = req.body;
 
     const user = await userRepository.findOneBy({ username: loginReq.username });
 
@@ -56,7 +56,7 @@ export const register = async (req: Request, res: Response) => {
     const hashedPassword = await bcrypt.hash(userCreationReq.password, 10);
 
     const newUser = userRepository.create({ ...userCreationReq, password: hashedPassword });
-    const savedUser = await userRepository.save(newUser); // Čuva korisnika u bazi
+    const savedUser = await userRepository.save(newUser);
 
     const userCreationRes: UserCreationRes = {
       failed: false,

@@ -55,16 +55,27 @@
     </div>
 
     <div class="picture-actions" v-if="canEdit">
-      <v-btn
-        v-if="!isEditing"
-        size="small"
-        color="primary"
-        variant="outlined"
-        @click.stop="startEdit"
-      >
-        <v-icon size="small">mdi-pencil</v-icon>
-        Rename
-      </v-btn>
+      <template v-if="!isEditing">
+        <v-btn
+          size="small"
+          color="primary"
+          variant="outlined"
+          @click.stop="startEdit"
+        >
+          <v-icon size="small">mdi-pencil</v-icon>
+          Rename
+        </v-btn>
+        
+        <v-btn
+          size="small"
+          color="error"
+          variant="outlined"
+          @click.stop="deletePicture"
+        >
+          <v-icon size="small">mdi-delete</v-icon>
+          Delete
+        </v-btn>
+      </template>
       
       <template v-else>
         <v-btn
@@ -90,23 +101,12 @@
           Cancel
         </v-btn>
       </template>
-
-      <v-btn
-        v-if="!isEditing"
-        size="small"
-        color="error"
-        variant="outlined"
-        @click.stop="deletePicture"
-      >
-        <v-icon size="small">mdi-delete</v-icon>
-        Delete
-      </v-btn>
     </div>
 </div>
 </template>
 
 <script setup lang="ts">
-    import { computed,ref,onMounted, toRaw } from 'vue';
+    import { computed,ref } from 'vue';
     import type { PictureDto } from '@/types/picture';
     import { useRouter } from 'vue-router';
     import { useAuthStore } from '@/stores/AuthStore';
@@ -130,8 +130,6 @@
     const isEditing = ref(false);
     const editingName = ref('');
     const saving = ref(false);
-
-    const pictureDimension = computed(() => props.pic.picture_data.length);
 
     const nameRules = [
         (v: string) => !!v?.trim() || 'Picture name is required',

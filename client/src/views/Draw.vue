@@ -1,16 +1,4 @@
 <template>
-<div v-if="socketStore.connected"
-  v-for="cursor in Array.from(cursors.entries())"
-  :key="cursor[0]"
-  class="collaborative-cursor"
-  :style="{
-    left: `${cursor[1].x}px`,
-    top: `${cursor[1].y}px`
-  }"
->
-  <v-icon :color="cursor[1].color" size="medium">mdi-cursor-default</v-icon>
-  <span class="cursor-username" :style="{ background: cursor[1].color }">{{ cursor[1].username }}</span>
-</div>
 <div class="draw-layout">
   <div v-if="socketStore.connected && connectedUsers.size > 0" class="user-pills">
     <div class="connection-status" :class="{ connected: socketStore.connected }">
@@ -100,32 +88,30 @@
         </div>
       </div>
     </div>
-    <div class="like-dislike-section">
-      <div class="like-dislike-buttons">
-        <v-btn
-          @click="handleLike"
-          :disabled="!authStore.isAuthenticated"
-          :color="userReaction === 'like' ? 'success' : 'grey'"
-          :variant="userReaction === 'like' ? 'elevated' : 'outlined'"
-          size="large"
-          class="reaction-btn"
-        >
-          <v-icon>mdi-thumb-up</v-icon>
-          <span class="reaction-count">{{ likeCount }}</span>
-        </v-btn>
-        
-        <v-btn
-          @click="handleDislike"
-          :disabled="!authStore.isAuthenticated"
-          :color="userReaction === 'dislike' ? 'error' : 'grey'"
-          :variant="userReaction === 'dislike' ? 'elevated' : 'outlined'"
-          size="large"
-          class="reaction-btn"
-        >
-          <v-icon>mdi-thumb-down</v-icon>
-          <span class="reaction-count">{{ dislikeCount }}</span>
-        </v-btn>
-      </div>
+    <div v-if="pictureId" class="like-dislike-buttons">
+      <v-btn
+        @click="handleLike"
+        :disabled="!authStore.isAuthenticated"
+        :color="userReaction === 'like' ? 'success' : 'grey'"
+        :variant="userReaction === 'like' ? 'elevated' : 'outlined'"
+        size="large"
+        class="reaction-btn"
+      >
+        <v-icon>mdi-thumb-up</v-icon>
+        <span class="reaction-count">{{ likeCount }}</span>
+      </v-btn>
+      
+      <v-btn
+        @click="handleDislike"
+        :disabled="!authStore.isAuthenticated"
+        :color="userReaction === 'dislike' ? 'error' : 'grey'"
+        :variant="userReaction === 'dislike' ? 'elevated' : 'outlined'"
+        size="large"
+        class="reaction-btn"
+      >
+        <v-icon>mdi-thumb-down</v-icon>
+        <span class="reaction-count">{{ dislikeCount }}</span>
+      </v-btn>
     </div>
     <div v-if="authStore.isAuthenticated && socketStore.connected" style="width: 100%; max-width: 600px; margin-top: 2rem;">
       <CommentList
@@ -177,7 +163,7 @@
         <v-btn 
           @click="saveDrawing"
           color="primary" 
-          :loading="saving"
+          :loading="savingInsideDialog"
           :disabled="!saveForm"
         >
           Save
@@ -185,6 +171,19 @@
       </v-card-actions>
     </v-card>
   </v-dialog>  
+</div>
+
+<div v-if="socketStore.connected"
+  v-for="cursor in Array.from(cursors.entries())"
+  :key="cursor[0]"
+  class="collaborative-cursor"
+  :style="{
+    left: `${cursor[1].x}px`,
+    top: `${cursor[1].y}px`
+  }"
+>
+  <v-icon :color="cursor[1].color" size="medium">mdi-cursor-default</v-icon>
+  <span class="cursor-username" :style="{ background: cursor[1].color }">{{ cursor[1].username }}</span>
 </div>
 
 <Chat 
@@ -199,7 +198,7 @@
   import { ref, watch, reactive, onMounted, onUnmounted, toRaw, triggerRef } from 'vue';
   import { useAuthStore } from '@/stores/AuthStore';
   import type { BasePictureDto, CommentDto } from '@/types/picture';
-  import { useRoute, useRouter } from 'vue-router';
+  import { useRoute, useRouter, onBeforeRouteUpdate } from 'vue-router';
   import { usePictureStore } from '@/stores/PictureStore';
   import { useSocketStore } from '@/stores/SocketStore';
   import type { CursorData, CursorDataUser, PixelChangeData, UserInRoom } from '@/types/collab';
@@ -217,7 +216,7 @@
 
   const saveDialog = ref(false);
   const drawingName = ref('');
-  const saving = ref(false);
+  const savingInsideDialog = ref(false);
   const successMessage = ref<string | null>(null);
   const errorMessage = ref<string | null>(null);
   const saveForm = ref<boolean>(false);
@@ -237,6 +236,23 @@
   const dislikeCount = ref(0);
   const userReaction = ref<'like' | 'dislike' | null>(null);
 
+  onBeforeRouteUpdate((to, from) => {
+    if ( from.query.id && !to.query.id) {
+      if (socketStore.connected) {
+        socketStore.disconnect();
+        clearRoom();
+      }
+      pictureId.value = null;
+      pictureName.value = 'Untitled';
+      pictureUserId.value = authStore.userId;
+      tiles.value = Array.from({ length: n.value }, () => Array(n.value).fill('#fff'));
+      comments.value = [];
+      likeCount.value = 0;
+      dislikeCount.value = 0;
+      userReaction.value = null;
+    }
+  })
+
   const nameRules = [
     (v: string) => !!v.trim() || 'Drawing name is required',
     (v: string) => v.trim().length <= 40 || 'Drawing name must be 40 characters or less'
@@ -245,7 +261,7 @@
   onMounted(async () => {
     window.addEventListener('mousedown', handleMouseDown);
     window.addEventListener('mouseup', handleMouseUp);
-
+    
     if (route.query.save === 'true' && authStore.isAuthenticated) {
       const pendingDrawing = localStorage.getItem('pendingDrawing');
       if (pendingDrawing) {
@@ -258,7 +274,7 @@
         }
       }
       openSaveDialog();
-      router.replace({ name: 'draw' , query: { id: pictureId.value } });
+      router.replace({ name: 'draw' });
     }
     else if (route.query.id) {
       pictureId.value = route.query.id as string;
@@ -306,9 +322,9 @@
         console.log(`Joined picture room with ${users.length} users`);
       });
 
-      socketStore.socket?.on('user-joined', (user: UserInRoom, cursor: CursorData) => {
+      socketStore.socket?.on('user-joined', (user: UserInRoom) => {
         connectedUsers.value.set(user.id, user);
-        cursors.value.set(user.id, {...cursor, username: user.username, color: '#000' });
+        // cursors.value.set(user.id, {...cursor, username: user.username, color: '#000' });
         // console.log('CONNECTED USERS:', connectedUsers.value);
         console.log(`User ${user.username} joined the room`);
       });
@@ -453,14 +469,14 @@
   }
 
   function handleSendMessage(text: string) {
-  if (socketStore.connected) {
-    socketStore.socket?.emit('chat-message', {
-      text,
-      userId: authStore.userId,
-      username: authStore.username
-    });
+    if (socketStore.connected) {
+      socketStore.socket?.emit('chat-message', {
+        text,
+        userId: authStore.userId,
+        username: authStore.username
+      });
+    }
   }
-}
 
   function sendSaveStarted() {
     if (!socketStore.connected) return;
@@ -568,12 +584,12 @@
         successMessage.value = 'Drawing updated successfully!';
         setTimeout(() => {
           successMessage.value = null;
-        }, 3000);
+        }, 2000);
       } else {
         errorMessage.value = result.error || 'Failed to update drawing';
         setTimeout(() => {
           errorMessage.value = null;
-        }, 3000);
+        }, 2000);
       }
         sendSaveFinished(result.success ? tiles.value : null);
     }
@@ -652,7 +668,7 @@
   }
 
   async function saveDrawing() {
-    saving.value = true;
+    savingInsideDialog.value = true;
     errorMessage.value = null;
     successMessage.value = null;
 
@@ -669,15 +685,19 @@
 
       successMessage.value = 'Drawing saved successfully!';
       saveDialog.value = false;
-              
+      
+      if (!socketStore.connected) {
+        connectHere();
+      }
+
       setTimeout(() => {
         successMessage.value = null;
-      }, 3000);
+      }, 2000);
 
     } else {
       errorMessage.value = result.error || 'Failed to save drawing';
     }
-    saving.value = false;
+    savingInsideDialog.value = false;
     pictureName.value = picture.name;
   }
   
@@ -814,16 +834,12 @@
   border-radius: 8px;
 }
 
-.like-dislike-section {
+.like-dislike-buttons {
   width: 100%;
   max-width: 600px;
   margin-top: 1.5rem;
   display: flex;
   justify-content: center;
-}
-
-.like-dislike-buttons {
-  display: flex;
   gap: 1rem;
   align-items: center;
 }
@@ -846,7 +862,7 @@
 }
 
 .collaborative-cursor {
-  position: fixed;
+  position: absolute;
   z-index: 1000;
   display: flex;
   align-items: center;

@@ -63,6 +63,10 @@ const emit = defineEmits<{
   sendMessage: [message: string];
 }>();
 
+defineExpose({
+  addMessage
+});
+
 function toggleChat() {
   isMinimized.value = !isMinimized.value;
 }
@@ -84,16 +88,12 @@ function addMessage(message: ChatMessage) {
 }
 
 function formatTime(timestamp: Date): string {
-  return timestamp.toLocaleTimeString('en-US', { 
+  return timestamp.toLocaleTimeString('en-GB', { 
     hour12: false, 
     hour: '2-digit', 
     minute: '2-digit' 
   });
 }
-
-defineExpose({
-  addMessage
-});
 </script>
 
 <style scoped>

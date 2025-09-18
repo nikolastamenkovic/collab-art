@@ -43,7 +43,6 @@
         color="error" 
         variant="outlined" 
         class="delete-btn"
-        :disabled="newComment.trim().length > 0"
         @click="handleDelete(comment.comment_id)"
       >
         <v-icon size="small">mdi-delete</v-icon>

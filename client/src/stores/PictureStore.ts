@@ -90,7 +90,7 @@ export const usePictureStore = defineStore('pictures', () => {
     }
 
     async function getPictureById(pictureId: string): Promise<{ success: boolean; data?: PictureDto; error?: string }> {
-        const existing = pictures.find(p => p.picture_id === pictureId);
+        // const existing = pictures.find(p => p.picture_id === pictureId);
 
         // if(existing) return {success: true, data: existing};
 
@@ -142,6 +142,9 @@ export const usePictureStore = defineStore('pictures', () => {
         if (result.success) {
             return { success: true, comment: result.data.comment };
         } else {
+            if (result.error.code == 'NOT_AUTHENTICATED' && authStore.isAuthenticated) {
+                authStore.logout();
+            }
             return { success: false, error: getErrorMessage(result.error) };
         }
     }
@@ -149,13 +152,16 @@ export const usePictureStore = defineStore('pictures', () => {
     async function likePicture(pictureId: string): Promise<{ success: boolean; error?: string }> {
         const result = await handleApiCall<UpdatePictureRes>(() =>
         fetch(`${API_ENDPOINTS.LIKE_PICTURE(pictureId)}`, {
-                method: 'PUT',
+                method: 'POST',
                 headers: getAuthHeaders()
             })
         );
         if (result.success) {
             return { success: true };
         } else {
+            if (result.error.code == 'NOT_AUTHENTICATED' && authStore.isAuthenticated) {
+                authStore.logout();
+            }
             return { success: false, error: getErrorMessage(result.error) };
         }
     }
@@ -163,13 +169,16 @@ export const usePictureStore = defineStore('pictures', () => {
     async function dislikePicture(pictureId: string): Promise<{ success: boolean; error?: string }> {
         const result = await handleApiCall<UpdatePictureRes>(() =>
         fetch(`${API_ENDPOINTS.DISLIKE_PICTURE(pictureId)}`, {
-                method: 'PUT',
+                method: 'POST',
                 headers: getAuthHeaders()
             })
         );
         if (result.success) {
             return { success: true };
         } else {
+            if (result.error.code == 'NOT_AUTHENTICATED' && authStore.isAuthenticated) {
+                authStore.logout();
+            }
             return { success: false, error: getErrorMessage(result.error) };
         }
     }
@@ -185,6 +194,9 @@ export const usePictureStore = defineStore('pictures', () => {
         if (result.success) {
             return { success: true };
         } else {
+            if (result.error.code == 'NOT_AUTHENTICATED' && authStore.isAuthenticated) {
+                authStore.logout();
+            }
             return { success: false, error: getErrorMessage(result.error) };
         }
     }

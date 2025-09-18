@@ -10,15 +10,6 @@ export class Comment {
     @Column()
     text: string;
 
-    // @CreateDateColumn()
-    // created_at: Date;
-
-    // @UpdateDateColumn()
-    // updated_at: Date;
-
-    // @Column("json")
-    // picture_data: string[][];
-
     @ManyToOne(() => User, (user) => user.comments, { onDelete: "CASCADE", eager: true })
     author: User;
 

@@ -11,8 +11,8 @@ router.get("/:id", getPictureById);
 router.post("/", authenticate, validatePictureSchema(false), createPicture);
 router.delete("/:id", authenticate, deletePicture);
 router.patch("/:id", authenticate, validatePictureSchema(true), updatePicture);
-router.put("/:id/like", authenticate, likePicture);
-router.put("/:id/dislike", authenticate, dislikePicture);
+router.post("/:id/like", authenticate, likePicture);
+router.post("/:id/dislike", authenticate, dislikePicture);
 router.post("/:id/comment", authenticate, validateSchema(commentSchema), commentPicture);
 router.delete("/comment/:id", authenticate, deleteComment);
 
